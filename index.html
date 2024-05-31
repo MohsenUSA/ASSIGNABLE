@@ -18,15 +18,18 @@
     <a href=".//f49d735d30c34f09b460-13.xpi">Batch Notifier v13</a>
 <br>
 <br>
+    <a href=".//67784ed0009d48fdac8a-14.xpi">Batch Notifier v14</a>
+<br>
+<br>
     <H3>Make sure you grant permission to the extension to play the audio notification</H3>
 <br>    
     <H2>1. Click the "Enable Batch Notification" button on the bottom right corner of the screen</H2>
     <H2>2. Click "Allow" on the next prompt that pops up on the left side of the address bar</H2>
 <br>
-    <H3>You can test the extension by pressing the button below:</H3>
+<!--     <H3>You can test the extension by pressing the button below:</H3> -->
 <br>
-    <button onclick="displayAssignable()">Click Me</button>
-    <p id="output"></p>
+<!--     <button onclick="displayAssignable()">Click Me</button> -->
+<!--     <p id="output"></p> -->
 
     <script>
         let removeAssignableTimeout;
@@ -35,7 +38,7 @@
             const outputElement = document.getElementById('output');
 
             clearTimeout(removeAssignableTimeout); // Clear any previous timeout
-            outputElement.textContent = 'ASSIGNABLE';
+            outputElement.textContent = 'A********E';
 
             removeAssignableTimeout = setTimeout(() => {
                 outputElement.textContent = '';
