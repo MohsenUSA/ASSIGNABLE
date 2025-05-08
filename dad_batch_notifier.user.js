@@ -7,8 +7,8 @@
 // @match        *://*.mohsenusa.github.io/*
 // @grant        none
 // @run-at       document-idle
-// @downloadURL  https://raw.githubusercontent.com/MohsenUSA/ASSIGNABLE/main/dad_batch_notifier.userscript.js
-// @updateURL    https://raw.githubusercontent.com/MohsenUSA/ASSIGNABLE/main/dad_batch_notifier.userscript.js
+// @downloadURL  https://raw.githubusercontent.com/MohsenUSA/ASSIGNABLE/main/dad_batch_notifier.user.js
+// @updateURL    https://raw.githubusercontent.com/MohsenUSA/ASSIGNABLE/main/dad_batch_notifier.user.js
 // ==/UserScript==
 
 (function () {
