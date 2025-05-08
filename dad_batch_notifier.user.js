@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         DAD Batch Notifier v1.0 ‑ (Generative AI Speech)
+// @name         DAD Batch Notifier v1.1 ‑ (Generative AI Speech)
 // @namespace    https://dad.mohajiho.com/
-// @version      1.0
-// @description  Tracks dropped batches and plays inlined audio clips (no TTS, no network). Logs to console with timestamps for debugging. By Mohajiho.
-// @author       Mohsen Hajihosseinnejad * alias: mohajiho * email: mohajiho@gmail.com
+// @author       Mohsen Hajihosseinnejad * alias: MOHAJIHO * email: mohajiho@gmail.com
+// @version      1.1
+// @description  Tracks dropped batches and plays generative artificial intelligence speech audio notifications. Developed By Mohajiho.
 // @match        *://*.mohsenusa.github.io/*
 // @grant        none
 // @run-at       document-idle
