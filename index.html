@@ -1,24 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
+  <style>
+    #countdown { font-size: 1.2em; margin-bottom: 8px; }
     #list-container { margin-top: 16px; }
     ul { list-style: none; padding: 0; }
     li { margin: 4px 0; }
     .assignable { font-weight: bold; }
     .item-title { margin-left: 8px; color: #555; }
+    .reload-message { margin-top: 16px; font-style: italic; color: #900; }
     button { padding: 8px 12px; }
-    </style>
+  </style>
 </head>
 <body>
 
-    <button id="show-list-btn">Test the Script</button>
+  <button id="show-list-btn">Show List</button>
+  <div id="countdown"></div>
   <div id="list-container"></div>
+
 
   <script>
     document.getElementById('show-list-btn').addEventListener('click', () => {
       const container = document.getElementById('list-container');
-      container.innerHTML = '';  // clear any previous list
+      container.innerHTML = '';  // clear any previous content
+      const countdownEl = document.getElementById('countdown');
 
       // ==== CONFIGURE YOUR SIX TITLES & REMOVAL DELAYS HERE ====
       const items = [
@@ -31,32 +36,51 @@
       ];
       // ========================================================
 
+      // determine total countdown duration (in seconds)
+      const maxDelayMs = Math.max(...items.map(i => i.delay));
+      let remainingSec = Math.ceil(maxDelayMs / 1100);
+
+      // helper to format mm:ss
+      function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      }
+
+      // start the countdown display
+      countdownEl.textContent = `Time remaining: ${formatTime(remainingSec)}`;
+      const timerId = setInterval(() => {
+        remainingSec--;
+        if (remainingSec >= 0) {
+          countdownEl.textContent = `Time remaining: ${formatTime(remainingSec)}`;
+        }
+        if (remainingSec <= 0) {
+          clearInterval(timerId);
+        }
+      }, 1000);
+
+      // render list items and schedule removals
+      let removedCount = 0;
       const ul = document.createElement('ul');
       container.appendChild(ul);
 
       items.forEach(({ title, delay }) => {
         const li = document.createElement('li');
-
-        // ASSIGNABLE span
         const aSpan = document.createElement('span');
         aSpan.textContent = 'ASSIGNABLE';
         aSpan.className = 'assignable';
-
-        // Title span
         const tSpan = document.createElement('span');
         tSpan.textContent = title;
         tSpan.className = 'item-title';
-
         li.append(aSpan, tSpan);
         ul.appendChild(li);
 
-        // schedule removal
         setTimeout(() => {
           if (li.parentNode) {
             li.remove();
             removedCount++;
-            // when all six are gone, show reload message
             if (removedCount === items.length) {
+              // all gone → show reload message
               const msg = document.createElement('p');
               msg.textContent = 'To test again, you need to reload the page!';
               msg.className = 'reload-message';
@@ -66,11 +90,29 @@
         }, delay);
       });
 
-      // disable button so it runs only once
+      // disable the button so it only runs once
       document.getElementById('show-list-btn').disabled = true;
     });
   </script>
-    
+
+
+<br>
+<br>
+<br>
+   <a href=".//dad_batch_notifier.user.js">DAD Batch Notifier v1.1 GAI - Auto Install</a>
+<br>
+<br>
+<br>
+    <br>
+     <H3>A********E</H3>
+    <br>
+     <H3>A********E</H3>
+    <br>
+     <H3>A********E</H3>
+    <br>
+     <H3>A********E</H3>
+    <br>
+
 <!--     <H3>I added the word "A********E to the code to make the extension notify you to get the hang of how it works. In our scenario, the word "A********E" shows up when a task has been created and disappears when an employee accepts a task and as long as employees do not accept the tasks, it keeps notifying them</H3> -->
 <br>
 <!--   <a href=".//e0cf7c779f06466daff6-8.0.xpi">Batch Notifier v08</a> -->
@@ -131,13 +173,8 @@
 <br>
 <!--    <a href=".//c2614e49764f49aaabb4-4.0.xpi">Product LookUp</a> -->
 <br>
-    
-<br>
-<br>
-<br>
-   <a href=".//dad_batch_notifier.user.js">DAD Batch Notifier v1.1 GAI - Auto Install</a>
-<br>
 
+    
 <br>
 <!--    <a href=".//dad_batch_notifier_v1.user.js">DAD Batch Notifier v1 - Natural Speech</a> -->
 <br>
@@ -145,17 +182,6 @@
 <br>
 <!--    <a href=".//dad_batch_notifier_v2.user.js">DAD Batch Notifier v2</a> -->
 <br>
-<br>
-<br>
-    <br>
-     <H3>A********E</H3>
-    <br>
-     <H3>A********E</H3>
-    <br>
-     <H3>A********E</H3>
-    <br>
-     <H3>A********E</H3>
-    <br>
 
 
     
