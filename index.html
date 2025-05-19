@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Batch Notifier Demo</title>
     <style>
     #list-container { margin-top: 16px; }
-    ul { list-style: decimal inside; padding: 0; }
+    ul { list-style: none; padding: 0; }
     li { margin: 4px 0; }
+    .assignable { font-weight: bold; }
+    .item-title { margin-left: 8px; color: #555; }
     button { padding: 8px 12px; }
     </style>
 </head>
@@ -17,37 +18,49 @@
   <script>
     document.getElementById('show-list-btn').addEventListener('click', () => {
       const container = document.getElementById('list-container');
-      container.innerHTML = '';
+      container.innerHTML = '';  // clear any previous list
 
+      // ==== CONFIGURE YOUR SIX TITLES & REMOVAL DELAYS HERE ====
       const items = [
-        { title: 'ASSIGNABLE Parcel 5s',    delay: 5000   },  // removes after  5s
-        { title: 'ASSIGNABLE Parcel 7s',     delay: 7000   },  // removes after  7s
-        { title: 'ASSIGNABLE Grocery 10s',    delay: 10000  },  // removes after 10s
-        { title: 'ASSIGNABLE Grocery 30s',    delay: 30000  },  // removes after 30s
-        { title: 'ASSIGNABLE Grocery 60s',  delay: 60000  },  // removes after 60s
-        { title: 'ASSIGNABLE Grocery 100s',     delay: 100000 }   // removes after100s
+        { title: 'Parcel 5s',   delay: 5000   },  //  5s
+        { title: 'Parcel 7s',    delay: 7000   },  //  7s
+        { title: 'Grocery 10s',   delay: 10000  },  // 10s
+        { title: 'Grocery 30s',   delay: 30000  },  // 30s
+        { title: 'Grocery 60s', delay: 60000  },  // 60s
+        { title: 'Grocery 100s',    delay: 100000 }   //100s
       ];
       // ========================================================
 
       const ul = document.createElement('ul');
       container.appendChild(ul);
 
-      // create list items and schedule their removal
       items.forEach(({ title, delay }) => {
         const li = document.createElement('li');
-        li.textContent = title;
+
+        // ASSIGNABLE span
+        const aSpan = document.createElement('span');
+        aSpan.textContent = 'ASSIGNABLE';
+        aSpan.className = 'assignable';
+
+        // Title span
+        const tSpan = document.createElement('span');
+        tSpan.textContent = title;
+        tSpan.className = 'item-title';
+
+        li.append(aSpan, tSpan);
         ul.appendChild(li);
 
+        // schedule removal
         setTimeout(() => {
-          // remove each item after its delay
           if (li.parentNode) li.remove();
         }, delay);
       });
 
-      // disable button so it's only run once
+      // disable button so it runs only once
       document.getElementById('show-list-btn').disabled = true;
     });
-  </script>    
+  </script>
+    
 <!--     <H3>I added the word "A********E to the code to make the extension notify you to get the hang of how it works. In our scenario, the word "A********E" shows up when a task has been created and disappears when an employee accepts a task and as long as employees do not accept the tasks, it keeps notifying them</H3> -->
 <br>
 <!--   <a href=".//e0cf7c779f06466daff6-8.0.xpi">Batch Notifier v08</a> -->
