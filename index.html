@@ -3,30 +3,43 @@
 <head>
     <title>Batch Notifier Demo</title>
     <style>
-    #buttons-container { display: flex; gap: 8px; flex-wrap: wrap; }
+    #list-container { margin-top: 16px; }
+    ul { list-style: decimal inside; padding: 0; }
+    li { margin: 4px 0; }
     button { padding: 8px 12px; }
     </style>
 </head>
 <body>
 
-    <div id="buttons-container"></div>
+    <button id="show-list-btn">Test the Script</button>
+  <div id="list-container"></div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const container = document.getElementById('buttons-container');
-      const delays = [5000, 7000, 10000, 30000, 60000, 100000]; // in ms
+    document.getElementById('show-list-btn').addEventListener('click', () => {
+      const container = document.getElementById('list-container');
+      // clear any existing list
+      container.innerHTML = '';
 
-      delays.forEach((delay, index) => {
-        // create and append button
-        const btn = document.createElement('button');
-        btn.textContent = 'ASSIGNABLE';
-        container.appendChild(btn);
-
-        // schedule its removal
-        setTimeout(() => {
-          if (btn.parentNode) btn.parentNode.removeChild(btn);
-        }, delay);
+      // create the list and items
+      const ul = document.createElement('ul');
+      const delays = [5000, 7000, 10000, 30000, 60000, 100000]; // ms
+      const items = delays.map(() => {
+        const li = document.createElement('li');
+        li.textContent = 'ASSIGNABLE';
+        ul.appendChild(li);
+        return li;
       });
+      container.appendChild(ul);
+
+      // schedule removals
+      items.forEach((li, idx) => {
+        setTimeout(() => {
+          if (li.parentNode) li.remove();
+        }, delays[idx]);
+      });
+
+      // disable button to prevent duplicate lists
+      document.getElementById('show-list-btn').disabled = true;
     });
   </script>
     
