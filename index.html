@@ -56,7 +56,17 @@
 
         // schedule removal
         setTimeout(() => {
-          if (li.parentNode) li.remove();
+          if (li.parentNode) {
+            li.remove();
+            removedCount++;
+            // when all six are gone, show reload message
+            if (removedCount === items.length) {
+              const msg = document.createElement('p');
+              msg.textContent = 'To test again, you need to reload the page!';
+              msg.className = 'reload-message';
+              container.appendChild(msg);
+            }
+          }
         }, delay);
       });
 
