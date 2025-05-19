@@ -22,23 +22,22 @@
   <script>
     document.getElementById('show-list-btn').addEventListener('click', () => {
       const container = document.getElementById('list-container');
-      container.innerHTML = '';  // clear any previous content
+      container.innerHTML = '';  // clear previous content
       const countdownEl = document.getElementById('countdown');
 
       // ==== CONFIGURE YOUR SIX TITLES & REMOVAL DELAYS HERE ====
       const items = [
-        { title: 'Parcel 5s',   delay: 5000   },  //  5s
-        { title: 'Parcel 7s',    delay: 7000   },  //  7s
+        { title: 'Parcel 5s',     delay: 5000   },  //  5s
+        { title: 'Parcel 7s',     delay: 7000   },  //  7s
         { title: 'Grocery 10s',   delay: 10000  },  // 10s
         { title: 'Grocery 30s',   delay: 30000  },  // 30s
-        { title: 'Grocery 60s', delay: 60000  },  // 60s
-        { title: 'Grocery 110s',    delay: 110000 }   //110s
+        { title: 'Grocery 60s',   delay: 60000  },  // 60s
+        { title: 'Grocery 110s',  delay: 110000 }   //110s
       ];
       // ========================================================
 
-      // determine total countdown duration (in seconds)
-      const maxDelayMs = Math.max(...items.map(i => i.delay));
-      let remainingSec = Math.ceil(maxDelayMs / 1100);
+      // start countdown at 110 seconds
+      let remainingSec = 110;
 
       // helper to format mm:ss
       function formatTime(sec) {
@@ -47,7 +46,7 @@
         return `${m}:${s.toString().padStart(2, '0')}`;
       }
 
-      // start the countdown display
+      // initialize countdown display
       countdownEl.textContent = `Time remaining: ${formatTime(remainingSec)}`;
       const timerId = setInterval(() => {
         remainingSec--;
@@ -80,7 +79,7 @@
             li.remove();
             removedCount++;
             if (removedCount === items.length) {
-              // all gone → show reload message
+              // when all are gone, show reload message
               const msg = document.createElement('p');
               msg.textContent = 'To test again, you need to reload the page!';
               msg.className = 'reload-message';
@@ -90,7 +89,7 @@
         }, delay);
       });
 
-      // disable the button so it only runs once
+      // disable button after first click
       document.getElementById('show-list-btn').disabled = true;
     });
   </script>
