@@ -2,8 +2,34 @@
 <html>
 <head>
     <title>Batch Notifier Demo</title>
+    <style>
+    #buttons-container { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 8px 12px; }
+    </style>
 </head>
 <body>
+
+    <div id="buttons-container"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('buttons-container');
+      const delays = [5000, 7000, 10000, 30000, 60000, 100000]; // in ms
+
+      delays.forEach((delay, index) => {
+        // create and append button
+        const btn = document.createElement('button');
+        btn.textContent = 'ASSIGNABLE';
+        container.appendChild(btn);
+
+        // schedule its removal
+        setTimeout(() => {
+          if (btn.parentNode) btn.parentNode.removeChild(btn);
+        }, delay);
+      });
+    });
+  </script>
+    
 <!--     <H3>I added the word "A********E to the code to make the extension notify you to get the hang of how it works. In our scenario, the word "A********E" shows up when a task has been created and disappears when an employee accepts a task and as long as employees do not accept the tasks, it keeps notifying them</H3> -->
 <br>
 <!--   <a href=".//e0cf7c779f06466daff6-8.0.xpi">Batch Notifier v08</a> -->
