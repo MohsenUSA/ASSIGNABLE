@@ -148,7 +148,7 @@
   const btn = document.createElement('button');
   btn.id = 'initNotify';
   btn.innerHTML = `
-  Start&nbsp;Monitoring!&nbsp;
+  Start&nbsp;Monitoring&nbsp;
   <span class="material-symbols-outlined"
       style="font-size:33px;vertical-align:middle">spatial_audio</span>`;
       Object.assign(btn.style, {
