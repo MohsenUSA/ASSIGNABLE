@@ -15,7 +15,7 @@
 </head>
 <body>
 
-  <button id="show-list-btn">Show List</button>
+  <button id="show-list-btn">Show Tasks</button>
   <div id="countdown"></div>
   <div id="list-container"></div>
 
@@ -32,15 +32,16 @@
         { title: 'Grocery 10s',   delay: 10000  },
         { title: 'Grocery 30s',   delay: 30000  },
         { title: 'Grocery 60s',   delay: 60000  },
-        { title: 'Grocery 110s',  delay: 110000 }
+        { title: 'Grocery 110s',  delay: 110000 },
+        { title: 'Grocery 150s',  delay: 150000 }
       ];
 
       // compute how many UNASSIGNABLE lines we'll actually create
       const unassignableCount = items.filter(item => item.title !== 'Grocery 110s').length;
       const totalToRemove = items.length + unassignableCount;
 
-      // start countdown at 110 seconds
-      let remainingSec = 110;
+      // start countdown at 150 seconds
+      let remainingSec = 150;
       countdownEl.textContent = `Time remaining: ${remainingSec}s`;
       const timerId = setInterval(() => {
         remainingSec--;
@@ -82,7 +83,7 @@
         }, delay);
 
         // UNASSIGNABLE (skip Grocery 110s)
-        if (title !== 'Grocery 110s') {
+        if (title !== 'Grocery 150s') {
           const liU = document.createElement('li');
           const spanU = document.createElement('span');
           spanU.textContent = 'UNASSIGNABLE';
@@ -99,7 +100,7 @@
               removedCount++;
               if (removedCount === totalToRemove) {
                 const msg = document.createElement('p');
-                msg.textContent = 'To test again, you need to reload the page!';
+                msg.textContent = 'Reload the page!';
                 msg.className = 'reload-message';
                 container.appendChild(msg);
               }
