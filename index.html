@@ -25,38 +25,39 @@
       const countdownEl = document.getElementById('countdown');
       container.innerHTML = '';
 
-      // your items & delays
+      // items & delays
       const items = [
-        { title: 'Parcel 5s',     delay: 5000   },  //  5s
-        { title: 'Parcel 7s',     delay: 7000   },  //  7s
-        { title: 'Grocery 10s',   delay: 10000  },  // 10s
-        { title: 'Grocery 30s',   delay: 30000  },  // 30s
-        { title: 'Grocery 60s',   delay: 60000  },  // 60s
-        { title: 'Grocery 110s',  delay: 110000 }   //110s
+        { title: 'Parcel 5s',     delay: 5000   },
+        { title: 'Parcel 7s',     delay: 7000   },
+        { title: 'Grocery 10s',   delay: 10000  },
+        { title: 'Grocery 30s',   delay: 30000  },
+        { title: 'Grocery 60s',   delay: 60000  },
+        { title: 'Grocery 110s',  delay: 110000 }
       ];
+
+      // compute how many UNASSIGNABLE lines we'll actually create
+      const unassignableCount = items.filter(item => item.title !== 'Grocery 110s').length;
+      const totalToRemove = items.length + unassignableCount;
 
       // start countdown at 110 seconds
       let remainingSec = 110;
       countdownEl.textContent = `Time remaining: ${remainingSec}s`;
-
       const timerId = setInterval(() => {
         remainingSec--;
         if (remainingSec >= 0) {
           countdownEl.textContent = `Time remaining: ${remainingSec}s`;
-        }
-        if (remainingSec <= 0) {
+        } else {
           clearInterval(timerId);
         }
       }, 1000);
 
-      // build list for both ASSIGNABLE + UNASSIGNABLE
+      // build list
       let removedCount = 0;
-      const totalToRemove = items.length * 2;
       const ul = document.createElement('ul');
       container.appendChild(ul);
 
       items.forEach(({ title, delay }) => {
-        // ASSIGNABLE item
+        // ASSIGNABLE
         const liA = document.createElement('li');
         const spanA = document.createElement('span');
         spanA.textContent = 'ASSIGNABLE';
@@ -80,35 +81,36 @@
           }
         }, delay);
 
-        // UNASSIGNABLE item
-        const liU = document.createElement('li');
-        const spanU = document.createElement('span');
-        spanU.textContent = 'UNASSIGNABLE';
-        spanU.className = 'unassignable';
-        const titleU = document.createElement('span');
-        titleU.textContent = title;
-        titleU.className = 'item-title';
-        liU.append(spanU, titleU);
-        ul.appendChild(liU);
+        // UNASSIGNABLE (skip Grocery 110s)
+        if (title !== 'Grocery 110s') {
+          const liU = document.createElement('li');
+          const spanU = document.createElement('span');
+          spanU.textContent = 'UNASSIGNABLE';
+          spanU.className = 'unassignable';
+          const titleU = document.createElement('span');
+          titleU.textContent = title;
+          titleU.className = 'item-title';
+          liU.append(spanU, titleU);
+          ul.appendChild(liU);
 
-        setTimeout(() => {
-          if (liU.parentNode) {
-            liU.remove();
-            removedCount++;
-            if (removedCount === totalToRemove) {
-              const msg = document.createElement('p');
-              msg.textContent = 'To test again, you need to reload the page!';
-              msg.className = 'reload-message';
-              container.appendChild(msg);
+          setTimeout(() => {
+            if (liU.parentNode) {
+              liU.remove();
+              removedCount++;
+              if (removedCount === totalToRemove) {
+                const msg = document.createElement('p');
+                msg.textContent = 'To test again, you need to reload the page!';
+                msg.className = 'reload-message';
+                container.appendChild(msg);
+              }
             }
-          }
-        }, delay);
+          }, delay);
+        }
       });
 
       document.getElementById('show-list-btn').disabled = true;
     });
   </script>
-
 
   <br><br><br>
   <a href=".//dad_batch_notifier.user.js">DAD Batch Notifier v1.1 GAI - Auto Install</a>
