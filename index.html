@@ -33,7 +33,8 @@
         { title: 'Grocery 30s',   delay: 30000  },
         { title: 'Grocery 60s',   delay: 60000  },
         { title: 'Grocery 110s',  delay: 110000 },
-        { title: 'Grocery 150s',  delay: 150000 }
+        { title: 'Grocery 120s',  delay: 120000 },
+        { title: 'Grocery 140s',  delay: 140000 }
       ];
 
       // compute how many UNASSIGNABLE lines we'll actually create
@@ -41,7 +42,7 @@
       const totalToRemove = items.length + unassignableCount;
 
       // start countdown at 150 seconds
-      let remainingSec = 150;
+      let remainingSec = 140;
       countdownEl.textContent = `Time remaining: ${remainingSec}s`;
       const timerId = setInterval(() => {
         remainingSec--;
