@@ -7,6 +7,7 @@
     ul { list-style: none; padding: 0; }
     li { margin: 4px 0; }
     .assignable { font-weight: bold; }
+    .unassignable { font-weight: bold; }
     .item-title { margin-left: 8px; color: #555; }
     .reload-message { margin-top: 16px; font-style: italic; color: #900; }
     button { padding: 8px 12px; }
@@ -17,7 +18,6 @@
   <button id="show-list-btn">Show List</button>
   <div id="countdown"></div>
   <div id="list-container"></div>
-
 
   <script>
     document.getElementById('show-list-btn').addEventListener('click', () => {
@@ -49,27 +49,53 @@
         }
       }, 1000);
 
-      // build list
+      // build list for both ASSIGNABLE + UNASSIGNABLE
       let removedCount = 0;
+      const totalToRemove = items.length * 2;
       const ul = document.createElement('ul');
       container.appendChild(ul);
 
       items.forEach(({ title, delay }) => {
-        const li = document.createElement('li');
-        const aSpan = document.createElement('span');
-        aSpan.textContent = 'ASSIGNABLE';
-        aSpan.className = 'assignable';
-        const tSpan = document.createElement('span');
-        tSpan.textContent = title;
-        tSpan.className = 'item-title';
-        li.append(aSpan, tSpan);
-        ul.appendChild(li);
+        // ASSIGNABLE item
+        const liA = document.createElement('li');
+        const spanA = document.createElement('span');
+        spanA.textContent = 'ASSIGNABLE';
+        spanA.className = 'assignable';
+        const titleA = document.createElement('span');
+        titleA.textContent = title;
+        titleA.className = 'item-title';
+        liA.append(spanA, titleA);
+        ul.appendChild(liA);
 
         setTimeout(() => {
-          if (li.parentNode) {
-            li.remove();
+          if (liA.parentNode) {
+            liA.remove();
             removedCount++;
-            if (removedCount === items.length) {
+            if (removedCount === totalToRemove) {
+              const msg = document.createElement('p');
+              msg.textContent = 'To test again, you need to reload the page!';
+              msg.className = 'reload-message';
+              container.appendChild(msg);
+            }
+          }
+        }, delay);
+
+        // UNASSIGNABLE item
+        const liU = document.createElement('li');
+        const spanU = document.createElement('span');
+        spanU.textContent = 'UNASSIGNABLE';
+        spanU.className = 'unassignable';
+        const titleU = document.createElement('span');
+        titleU.textContent = title;
+        titleU.className = 'item-title';
+        liU.append(spanU, titleU);
+        ul.appendChild(liU);
+
+        setTimeout(() => {
+          if (liU.parentNode) {
+            liU.remove();
+            removedCount++;
+            if (removedCount === totalToRemove) {
               const msg = document.createElement('p');
               msg.textContent = 'To test again, you need to reload the page!';
               msg.className = 'reload-message';
@@ -84,113 +110,13 @@
   </script>
 
 
-<br>
-<br>
-<br>
-   <a href=".//dad_batch_notifier.user.js">DAD Batch Notifier v1.1 GAI - Auto Install</a>
-<br>
-<br>
-<br>
-    <br>
-     <H3>A********E</H3>
-    <br>
-     <H3>A********E</H3>
-    <br>
-     <H3>A********E</H3>
-    <br>
-     <H3>A********E</H3>
-    <br>
-
-<!--     <H3>I added the word "A********E to the code to make the extension notify you to get the hang of how it works. In our scenario, the word "A********E" shows up when a task has been created and disappears when an employee accepts a task and as long as employees do not accept the tasks, it keeps notifying them</H3> -->
-<br>
-<!--   <a href=".//e0cf7c779f06466daff6-8.0.xpi">Batch Notifier v08</a> -->
-<br>
-<br>
-<!--    <a href=".//34f9814ae8c94dab9d95-11.xpi">Batch Notifier v11</a> -->
-<br>
-<br>
-<!--    <a href=".//DAD_Batch_Notifier.exe">Batch Notifier</a>  -->
-<br>
-<br>
-<!--    <a href=".//f49d735d30c34f09b460-13.xpi">Batch Notifier v13</a> -->
-<br>
-<br>
-<!--    <a href=".//67784ed0009d48fdac8a-14.xpi">Batch Notifier v14 (15 seconds interval)</a> -->
-<br>
-<br>
-<!--    <a href=".//69162e67cab14ff49e7a-15.xpi">Batch Notifier v15 (10 seconds interval)</a> -->
-<br>
-<br>
-<!--    <a href=".//7470366d7323457a83fc-16.xpi">Batch Notifier v16 (5 seconds interval)</a> -->
-<br>
-<br>
-<!--    <a href=".//c11eac3e7a804f3f8bec-17.xpi">Batch Notifier v17 (10 seconds interval)</a> -->
-<br>
-<br>
-<!--    <H3>** Make sure you remove the previous version before installing the new version **</H3>   -->
-<br>
-<!--    <H3>Make sure you grant permission to the extension to play the audio notification after installing</H3> -->
-<br>    
-<!--    <H2>1. Click the "Enable Batch Notification" button on the bottom right corner of the screen</H2> -->
-<!--    <H2>2. Click "Allow" on the next prompt that pops up on the left side of the address bar</H2> -->
-<br>
-<!--     <H3>You can test the extension by pressing the button below:</H3> -->
-<br>
-<!--    <a href=".//bf9dfb1f30104a7f8df4-1.0.xpi">Batch Notifier v1.0</a> -->
-<br>
-
-<br>
-<!--    <a href=".//dad_batch_notifier.userscript.js">DAD Batch Notifier v1.0 GAI</a> -->
-<br>
-
-    
-<br>
-<!--    <a href=".//DAD_PLU_Desktop_and_Mobile_GA.userscript.js">GA UserScript</a> -->
-<br>
-       
-<br>
-<!--    <a href=".//DAD_Product_LoockUp_Desktop_and_Mobile_iPhone.userscript.js">iPhone UserScript</a> -->
-<br>
-
-    
-<br>
-<!--    <a href=".//DAD_Product_LoockUp_Desktop_and_Mobile.userscript.js">UserScript</a> -->
-<br>
-
-    
-<br>
-<!--    <a href=".//c2614e49764f49aaabb4-4.0.xpi">Product LookUp</a> -->
-<br>
-
-    
-<br>
-<!--    <a href=".//dad_batch_notifier_v1.user.js">DAD Batch Notifier v1 - Natural Speech</a> -->
-<br>
-    
-<br>
-<!--    <a href=".//dad_batch_notifier_v2.user.js">DAD Batch Notifier v2</a> -->
-<br>
-
-
-    
-<!--     <button onclick="displayAssignable()">Click Me</button>
-    <p id="output"></p>
-     <H2>A********E</H2>
-
-    <script>
-        let removeAssignableTimeout;
-
-        function displayAssignable() {
-            const outputElement = document.getElementById('output');
-
-            clearTimeout(removeAssignableTimeout); // Clear any previous timeout
-            outputElement.textContent = 'ASSIGNABLE';
-
-            removeAssignableTimeout = setTimeout(() => {
-                outputElement.textContent = '';
-            }, 1000);
-        }
-    </script> -->
+  <br><br><br>
+  <a href=".//dad_batch_notifier.user.js">DAD Batch Notifier v1.1 GAI - Auto Install</a>
+  <br><br><br><br>
+  <h3>A********E</h3><br>
+  <h3>A********E</h3><br>
+  <h3>A********E</h3><br>
+  <h3>A********E</h3><br>
 
 </body>
 </html>
