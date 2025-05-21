@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         DAD Batch Notifier v0.3 - (GAI Speech)
+// @name         DAD Batch Notifier v0.4 - (GAI Speech)
 // @namespace    https://dad.mohajiho.com/
 // @author       Mohsen Hajihosseinnejad • alias: MOHAJIHO • email: mohajiho@gmail.com
-// @version      0.3
+// @version      0.4
 // @description  Tracks dropped batches (ASSIGNABLE + UNASSIGNABLE) and plays AI-generated speech alerts.
 // @match        *://*.mohsenusa.github.io/*
 // @run-at       document-idle
@@ -189,18 +189,63 @@ function injectStartButton() {
     document.head.appendChild(l);
   }
 
-  /* overlay */
-  const overlay = Object.assign(document.createElement('div'), { id: 'initNotifyOverlay' });
-  Object.assign(overlay.style, {
-    position: 'fixed',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backdropFilter: 'blur(12px)',
-    background: 'rgba(0,0,0,0.35)',
-    zIndex: 9999
-  });
+/* overlay */
+const overlay = Object.assign(document.createElement('div'), { id: 'initNotifyOverlay' });
+Object.assign(overlay.style, {
+  position: 'fixed',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'column', // <─ allow stacked content
+  gap: '16px',
+  zIndex: 9999,
+
+  /* ——— privacy glass ——— */
+  /* ❶ heavier blur         */
+  /* ❷ drain brightness      */
+  /* ❸ flatten contrast      */
+  /* ❹ desaturate to greys   */
+  backdropFilter: 'blur(24px) brightness(0.4) contrast(0.2) saturate(0.2)',
+
+  /* dark tint below the hatch layer */
+  background: 'rgba(0,0,0,0.45)',
+  overflow: 'hidden'
+});
+
+/* ── subtle hatch layer ───────────────────────────────────────── */
+overlay.appendChild(Object.assign(document.createElement('style'), {
+  textContent: `
+    #initNotifyOverlay::after{
+      content:'';
+      position:absolute; inset:0;
+      pointer-events:none;
+
+      /* 45° stripes: first length = stripe width, second = gap */
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(255,255,255,0.05) 0 1px,
+        transparent             6px 12px
+      );
+      mix-blend-mode: overlay;   /* lets tint show through */
+    }
+  `
+}));
+
+    /* ── helper panel ──────────────────────────────────────────────── */
+const info = document.createElement('div');
+info.textContent = 'All set! Just click “Start Monitoring” below!';
+Object.assign(info.style, {
+  font: '600 15px/1.35 system-ui, sans-serif',
+  color: '#fff',
+  padding: '12px 18px',
+  borderRadius: '8px',
+  background: 'rgba(0,0,0,0.55)',
+  maxWidth: '22em',
+  textAlign: 'center',
+  boxShadow: '0 2px 6px rgba(0,0,0,.4)'
+});
+overlay.appendChild(info);
 
   /* button */
   const btn = Object.assign(document.createElement('button'), { id: 'initNotify' });
