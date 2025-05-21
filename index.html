@@ -36,7 +36,7 @@
         { title: 'Grocery 120s',  delay: 120000 },
         { title: 'Grocery 140s',  delay: 140000 },
         { title: 'Grocery 150s',  delay: 150000 },
-        { title: 'Grocery 160s',  delay: 160000 }
+        { title: 'Grocery 170s',  delay: 170000 }
       ];
 
       // compute how many UNASSIGNABLE lines we'll actually create
@@ -44,7 +44,7 @@
       const totalToRemove = items.length + unassignableCount;
 
       // start countdown at 160 seconds
-      let remainingSec = 160;
+      let remainingSec = 170;
       countdownEl.textContent = `Time remaining: ${remainingSec}s`;
       const timerId = setInterval(() => {
         remainingSec--;
@@ -85,8 +85,8 @@
           }
         }, delay);
 
-        // UNASSIGNABLE (skip Grocery 110s)
-        if (title !== 'Grocery 160s') {
+        // UNASSIGNABLE (skip Grocery 170s)
+        if (title !== 'Grocery 170s') {
           const liU = document.createElement('li');
           const spanU = document.createElement('span');
           spanU.textContent = 'UNASSIGNABLE';
