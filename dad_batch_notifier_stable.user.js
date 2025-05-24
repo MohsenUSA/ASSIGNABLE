@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         DAD Batch Notifier v2.0 ‑ (GAI Speech)
+// @name         DAD Batch Notifier Stable 05-20 ‑ (GAI Speech)
 // @namespace    https://dad.mohajiho.com/
 // @author       Mohsen Hajihosseinnejad * alias: MOHAJIHO * email: mohajiho@gmail.com
 // @version      2.0
@@ -135,57 +135,100 @@
       document.head.appendChild(iconCSS);
   }
 
-  /* ---------------- overlay & start button ---------------- */
-  const overlay = document.createElement('div');
-  overlay.id = 'initNotifyOverlay';
-  Object.assign(overlay.style, {
-      position: 'fixed', inset: 0,
-      backdropFilter: 'blur(6px)',
-      backgroundColor: 'rgba(0,0,0,0.2)',
-      zIndex: '9999'
-  });
+      /* overlay */
+      const overlay = Object.assign(document.createElement('div'), { id: 'initNotifyOverlay' });
+      Object.assign(overlay.style, {
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column', // <─ allow stacked content
+        gap: '16px',
+        zIndex: 9999,
 
-  const btn = document.createElement('button');
-  btn.id = 'initNotify';
-  btn.innerHTML = `
-  Start&nbsp;Monitoring&nbsp;
-  <span class="material-symbols-outlined"
-      style="font-size:33px;vertical-align:middle">spatial_audio</span>`;
-      Object.assign(btn.style, {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '6px',
-      position: 'fixed',
-      top: '50%', left: '50%',
-      transform: 'translate(-50%, -50%)',
-      zIndex: '10000',
-      padding: '12px 20px',
-      fontSize: '22px',
-      fontWeight: 'bold',
-      backgroundColor: '#2b8a3e',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-  });
+        /* ——— privacy glass ——— */
+        /* ❶ heavier blur         */
+        /* ❷ drain brightness      */
+        /* ❸ flatten contrast      */
+        /* ❹ desaturate to greys   */
+        backdropFilter: 'blur(24px) brightness(0.4) contrast(0.2) saturate(0.2)',
 
-  document.body.append(overlay, btn);
+        /* dark tint below the hatch layer */
+        background: 'rgba(0,0,0,0.45)',
+        overflow: 'hidden'
+      });
 
-  btn.addEventListener('click', () => {
-      playAudio('enabled');
-      log('User started notifications');
-      overlay.remove();
-      btn.remove();
-      startObserver();
-  });
-}
-  /* ------------------- initialise ----------------------------- */
-  function initialize() {
-    log('Initializing Batch Notifier (inline‑audio)…');
-    injectStartButton();
-  }
+      /* ── subtle hatch layer ───────────────────────────────────────── */
+      overlay.appendChild(Object.assign(document.createElement('style'), {
+        textContent: `
+          #initNotifyOverlay::after{
+            content:'';
+            position:absolute; inset:0;
+            pointer-events:none;
 
-  if (document.body) initialize();
-  else document.addEventListener('DOMContentLoaded', initialize);
-})();
+            /* 45° stripes: first length = stripe width, second = gap */
+            background: repeating-linear-gradient(
+              135deg,
+              rgba(255,255,255,0.05) 0 1px,
+              transparent             6px 12px
+            );
+            mix-blend-mode: overlay;   /* lets tint show through */
+          }
+        `
+      }));
+
+          /* ── helper panel ──────────────────────────────────────────────── */
+      const info = document.createElement('div');
+      info.textContent = 'All set! Just click “Start Monitoring” below!';
+      Object.assign(info.style, {
+        font: '600 20px/1.35 system-ui, sans-serif',
+        color: '#fff',
+        padding: '12px 18px',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.55)',
+        maxWidth: '22em',
+        textAlign: 'center',
+        boxShadow: '0 2px 6px rgba(0,0,0,.4)'
+      });
+      overlay.appendChild(info);
+
+        /* button */
+        const btn = Object.assign(document.createElement('button'), { id: 'initNotify' });
+        btn.innerHTML =
+          'Start&nbsp;Monitoring&nbsp;<span class="material-symbols-outlined" style="font-size:33px;vertical-align:middle">spatial_audio</span>';
+        Object.assign(btn.style, {
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '12px 20px',
+          fontSize: '22px',
+          fontWeight: 'bold',
+          background: '#2b8a3e',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        });
+
+        overlay.appendChild(btn);
+        document.body.appendChild(overlay);
+
+        btn.addEventListener('click', () => {
+          playAudio('enabled'); // little “boop” to confirm
+          overlay.remove();
+          observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            characterData: true
+          });
+          log('observer started');
+        });
+      }
+
+      /* bootstrap */
+      if (document.body) injectStartButton();
+      else window.addEventListener('DOMContentLoaded', injectStartButton);
+
+      })();
