@@ -146,33 +146,38 @@
             break;
         }
 
-        /* -------- UNASSIGNABLE (missed-pick) ----------------------------- */
-        switch (mpState) {
-          case 'idle':
-            if (mpCnt) {
-              mpState = 'pending';
-              mpStartTO = setTimeout(() => {
-                mpStartTO = null;
-                if (countLabels()[1]) { // still there
-                  mpState = 'active';
-                  startMpSequence(); // **one call – handles all audio**
-                } else mpState = 'idle';
-              }, CONFIRM_DELAY);
-            }
-            break;
-
-          case 'pending':
-            if (!mpCnt) { clearTimeout(mpStartTO); mpStartTO = null; mpState = 'idle'; }
-            break;
-
-          case 'active':
-            if (!mpCnt) {
-              clearInterval(mpInterval); mpInterval = null;
-              mpState = 'idle';
-            }
-            break;
+  /* -------- UNASSIGNABLE (missed-pick) --------------------------- */
+  if (!cfg.enableUnassignable) {
+    if (mpState !== 'idle') {
+      clearTimeout(mpStartTO); mpStartTO = null;
+      clearInterval(mpInterval); mpInterval = null;
+      mpState = 'idle';
+    }
+  } else {
+    switch (mpState) {
+      case 'idle':
+        if (mpCnt) {
+          mpState = 'pending';
+          mpStartTO = setTimeout(() => {
+            mpStartTO = null;
+            if (countLabels()[1]) {
+              mpState = 'active';
+              startMpSequence();
+            } else mpState = 'idle';
+          }, CONFIRM_DELAY);
         }
-
+        break;
+      case 'pending':
+        if (!mpCnt) { clearTimeout(mpStartTO); mpStartTO = null; mpState = 'idle'; }
+        break;
+      case 'active':
+        if (!mpCnt) {
+          clearInterval(mpInterval); mpInterval = null;
+          mpState = 'idle';
+        }
+        break;
+    }
+  }
         log(`ASSIGNABLE=${aCnt} [${aState}] | UNASSIGNABLE=${mpCnt} [${mpState}]`);
       }
 
