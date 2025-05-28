@@ -346,7 +346,7 @@
       
         const toast = document.createElement('div');
         toast.id = 'initNotifyToast';
-        toast.textContent = 'All set! Just click "Start Monitoring"!';
+        toast.innerHTML = 'All set!<br>Just click “Start Monitoring”!'; 
         Object.assign(toast.style, {
           position: 'fixed',
           top: '40%', left: '50%',
