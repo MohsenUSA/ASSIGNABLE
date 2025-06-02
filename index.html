@@ -65,20 +65,22 @@
         const taskWrapper = document.createElement('div');
         taskWrapper.className = 'job-id-cell';
 
-        // ASSIGNABLE
-        const liA = document.createElement('li');
-        const spanA = document.createElement('span');
-        spanA.textContent = 'ASSIGNABLE';
-        spanA.className = 'assignable';
-        const titleA = document.createElement('span');
-        titleA.textContent = title;
-        titleA.className = 'item-title';
-        liA.append(spanA, titleA);
-        taskWrapper.appendChild(liA);
+        // Determine if assignable
+        const isAssignable = title !== 'Grocery 110s';
+
+        const li = document.createElement('li');
+        const spanStatus = document.createElement('span');
+        spanStatus.textContent = isAssignable ? 'ASSIGNABLE' : 'UNASSIGNABLE';
+        spanStatus.className = isAssignable ? 'assignable' : 'unassignable';
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = title;
+        titleSpan.className = 'item-title';
+        li.append(spanStatus, titleSpan);
+        taskWrapper.appendChild(li);
 
         setTimeout(() => {
-          if (liA.parentNode) {
-            liA.remove();
+          if (li.parentNode) {
+            li.remove();
             removedCount++;
             if (removedCount === totalToRemove) {
               const msg = document.createElement('p');
