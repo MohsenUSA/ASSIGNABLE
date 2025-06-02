@@ -6,18 +6,19 @@
     #list-container { margin-top: 16px; }
     ul { list-style: none; padding: 0; }
     li { margin: 4px 0; }
-    .assignable { font-weight: bold; }
-    .unassignable { font-weight: bold; }
+    .assignable { font-weight: bold; color: green; }
+    .unassignable { font-weight: bold; color: red; }
     .item-title { margin-left: 8px; color: #555; }
     .reload-message { margin-top: 16px; font-style: italic; color: #900; }
     button { padding: 8px 12px; }
+    .job-id-cell { padding: 8px; border: 1px solid #ccc; margin-bottom: 8px; border-radius: 4px; background-color: #f9f9f9; }
   </style>
 </head>
 <body>
 
   <button id="show-list-btn">Show Tasks</button>
   <div id="countdown"></div>
-  <div class="job-id-cell" id="list-container"></div>
+  <div id="list-container"></div>
 
   <script>
     document.getElementById('show-list-btn').addEventListener('click', () => {
@@ -43,7 +44,7 @@
       const unassignableCount = items.filter(item => item.title !== 'Grocery 110s').length;
       const totalToRemove = items.length + unassignableCount;
 
-      // start countdown at 160 seconds
+      // start countdown at 170 seconds
       let remainingSec = 170;
       countdownEl.textContent = `Time remaining: ${remainingSec}s`;
       const timerId = setInterval(() => {
@@ -61,6 +62,9 @@
       container.appendChild(ul);
 
       items.forEach(({ title, delay }) => {
+        const taskWrapper = document.createElement('div');
+        taskWrapper.className = 'job-id-cell';
+
         // ASSIGNABLE
         const liA = document.createElement('li');
         const spanA = document.createElement('span');
@@ -70,7 +74,7 @@
         titleA.textContent = title;
         titleA.className = 'item-title';
         liA.append(spanA, titleA);
-        ul.appendChild(liA);
+        taskWrapper.appendChild(liA);
 
         setTimeout(() => {
           if (liA.parentNode) {
@@ -95,7 +99,7 @@
           titleU.textContent = title;
           titleU.className = 'item-title';
           liU.append(spanU, titleU);
-          ul.appendChild(liU);
+          taskWrapper.appendChild(liU);
 
           setTimeout(() => {
             if (liU.parentNode) {
@@ -110,6 +114,8 @@
             }
           }, delay);
         }
+
+        ul.appendChild(taskWrapper);
       });
 
       document.getElementById('show-list-btn').disabled = true;
