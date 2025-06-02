@@ -65,7 +65,7 @@
             case 'idle':
                 if (count > 0) {
                     state = 'pending';
-                    log('Detected Batch(es) → pending confirmation in 7 s');
+                    log('Batch(es) Detected → pending confirmation in 7 s');
                     startTimeout = setTimeout(() => {
                         startTimeout = null;
 
