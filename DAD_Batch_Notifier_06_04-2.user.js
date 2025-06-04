@@ -17,12 +17,22 @@
     unassignableEnabled: true, // toggle for not getting UNASSIGNABLE task alerts
     debug: false // toggle for console logging
   };
-
   for (const k in DEFAULTS) {
     if (GM_getValue(k) === undefined) GM_setValue(k, DEFAULTS[k]);
   }
   const isDebug = () => GM_getValue('debug');
-  const log = (...a) => isDebug() && console.log('[DAD-LOG]', ...a);
+
+  const log = (...a) => {
+    if (isDebug()) {
+      const timestamp = new Date().toLocaleString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      console.log(`[${timestamp}] [DAD-LOG]`, ...a);
+    }
+  };
 
   /*──────────────── MENU TOGGLES (single helper) ──────*/
   function addMenuToggle(key, labelBase, defaultVal) {
