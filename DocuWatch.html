@@ -1,0 +1,5302 @@
+<!DOCTYPE html>
+<!--
+    DocuWatch - Browser-based Spreadsheet Viewer
+    Built by @XPRODUCTIVITY (https://x.com/xproductivity)
+
+    Third-party libraries:
+    - SheetJS (xlsx.js) - Apache 2.0 License - https://sheetjs.com/
+    - QRCode.js - MIT License - https://github.com/davidshimjs/qrcodejs
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWatch</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='20' height='24' rx='2' fill='%2322c55e'/%3E%3Crect x='5' y='8' width='5' height='4' fill='white' opacity='0.9'/%3E%3Crect x='12' y='8' width='5' height='4' fill='white' opacity='0.7'/%3E%3Crect x='5' y='14' width='5' height='4' fill='white' opacity='0.7'/%3E%3Crect x='12' y='14' width='5' height='4' fill='white' opacity='0.9'/%3E%3Crect x='5' y='20' width='5' height='4' fill='white' opacity='0.9'/%3E%3Crect x='12' y='20' width='5' height='4' fill='white' opacity='0.7'/%3E%3Ccircle cx='22' cy='20' r='7' fill='%236366f1'/%3E%3Ccircle cx='22' cy='20' r='4' fill='white'/%3E%3Crect x='26' y='24' width='4' height='8' rx='1' transform='rotate(-45 26 24)' fill='%236366f1'/%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root, :root[data-theme="dark"] {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-hover: #22222f;
+            --bg-elevated: #252532;
+            --border-color: #2a2a3a;
+            --border-light: #3a3a4a;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --text-muted: #55556a;
+            --accent: #6366f1;
+            --accent-hover: #5558e3;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --accent-soft: rgba(99, 102, 241, 0.15);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        :root[data-theme="light"] {
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f0f2;
+            --bg-hover: #e8e8ec;
+            --bg-elevated: #ffffff;
+            --border-color: #d1d1d6;
+            --border-light: #e5e5ea;
+            --text-primary: #1a1a1f;
+            --text-secondary: #6b6b7a;
+            --text-muted: #9898a8;
+            --accent: #6366f1;
+            --accent-hover: #5558e3;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --accent-soft: rgba(99, 102, 241, 0.1);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root:not([data-theme]) {
+                --bg-primary: #f5f5f7;
+                --bg-secondary: #ffffff;
+                --bg-tertiary: #f0f0f2;
+                --bg-hover: #e8e8ec;
+                --bg-elevated: #ffffff;
+                --border-color: #d1d1d6;
+                --border-light: #e5e5ea;
+                --text-primary: #1a1a1f;
+                --text-secondary: #6b6b7a;
+                --text-muted: #9898a8;
+                --accent: #6366f1;
+                --accent-hover: #5558e3;
+                --accent-glow: rgba(99, 102, 241, 0.2);
+                --accent-soft: rgba(99, 102, 241, 0.1);
+                --success: #22c55e;
+                --warning: #f59e0b;
+                --danger: #ef4444;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        .drop-zone {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 3.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out 0.1s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+        }
+
+        .drop-zone:hover::before, .drop-zone.drag-over::before {
+            opacity: 1;
+        }
+
+        .drop-zone-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.25rem;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .drop-zone-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: var(--accent);
+        }
+
+        .drop-zone-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .drop-zone-text h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .drop-zone-text p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .drop-zone-text span {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-top: 1.5rem;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #22c55e22, #22c55e11);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .file-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--success);
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .clear-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .controls {
+            display: none;
+            gap: 1rem;
+            margin-top: 2rem;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .controls.visible {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.25rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .filter-toggle-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .filter-toggle-btn.active {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .filter-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .filter-badge {
+            background: var(--accent);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            margin-left: 0.25rem;
+        }
+
+        .columns-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.25rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .columns-toggle-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .columns-toggle-btn.active {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .columns-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .columns-badge {
+            background: var(--accent);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            margin-left: 0.25rem;
+        }
+
+        /* Header Context Menu */
+        .header-context-menu {
+            position: fixed;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            min-width: 220px;
+            display: none;
+            animation: menuFadeIn 0.15s ease-out;
+        }
+
+        .header-context-menu.visible {
+            display: block;
+        }
+
+        .header-context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .header-context-menu-item:hover {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .header-context-menu-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .header-context-menu-item.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .header-context-menu-item.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .header-context-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.4rem 0;
+        }
+
+        .header-context-menu-item.active {
+            color: var(--accent);
+        }
+
+        .header-context-menu-item.active svg {
+            stroke: var(--accent);
+        }
+
+        /* QR Column Cells - Always center aligned */
+        .qr-cell {
+            vertical-align: middle !important;
+            text-align: center !important;
+        }
+
+        .qr-cell-img {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background: white;
+            padding: 4px;
+            box-sizing: content-box;
+        }
+
+        .qr-cell-img:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .qr-cell-placeholder {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Column Alignment */
+        .align-left {
+            text-align: left;
+        }
+
+        .align-center {
+            text-align: center;
+        }
+
+        .align-right {
+            text-align: right;
+        }
+
+        /* QR Column Header */
+        .qr-column-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .qr-column-header svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.7;
+        }
+
+        /* QR Column in Columns Panel */
+        .column-toggle.qr-column .column-name {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .column-toggle.qr-column .column-name svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0.6;
+        }
+
+        /* Focus Mode */
+        .focus-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(168, 85, 247, 0.7);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.25rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+        }
+
+        .focus-toggle-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 18px rgba(168, 85, 247, 0.25);
+        }
+
+        .focus-toggle-btn.active {
+            background: rgb(168, 85, 247);
+            border-color: rgb(168, 85, 247);
+            color: white;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .focus-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Expand Toggle Button */
+        .expand-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(100, 149, 237, 0.7);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.25rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 12px rgba(100, 149, 237, 0.35);
+        }
+
+        .expand-toggle-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: rgba(100, 149, 237, 0.9);
+            box-shadow: 0 0 18px rgba(100, 149, 237, 0.45);
+        }
+
+        .expand-toggle-btn.active {
+            background: rgba(100, 149, 237, 0.1);
+            border-color: rgb(100, 149, 237);
+            color: rgb(100, 149, 237);
+            box-shadow: 0 0 20px rgba(100, 149, 237, 0.4);
+        }
+
+        .expand-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .expand-toggle-btn .icon-expand,
+        .expand-toggle-btn.active .icon-collapse {
+            display: block;
+        }
+
+        .expand-toggle-btn .icon-collapse,
+        .expand-toggle-btn.active .icon-expand {
+            display: none;
+        }
+
+        /* Focus Mode Table Styles */
+        .table-container.focus-mode tbody tr {
+            opacity: 0.15;
+            filter: blur(2px);
+            transition: all 0.2s ease;
+        }
+
+        .table-container.focus-mode tbody tr.focused {
+            opacity: 1;
+            filter: none;
+            background: var(--accent-soft);
+            box-shadow: 0 0 0 2px var(--accent), 0 4px 20px rgba(99, 102, 241, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        .table-container.focus-mode tbody tr.focused td {
+            background: var(--accent-soft);
+        }
+
+        .table-container.focus-mode tbody tr.focused td:first-child {
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Enlarged Focus Mode */
+        .table-container.focus-mode.focus-enlarged tbody tr.focused td {
+            padding: 1.25rem 1.5rem;
+            font-size: 1.1rem;
+            white-space: normal;
+            max-width: none;
+            vertical-align: middle;
+        }
+
+        .table-container.focus-mode.focus-enlarged tbody tr.focused td:first-child {
+            font-size: 1rem;
+        }
+
+        .table-container.focus-mode.focus-enlarged tbody tr.focused .qr-cell-img {
+            width: 80px;
+            height: 80px;
+            padding: 6px;
+        }
+
+        /* Focus Mode Indicator */
+        .focus-indicator {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2100;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .focus-indicator.visible {
+            display: flex;
+        }
+
+        .focus-indicator-row {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .focus-indicator-input {
+            width: 3.5em;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.2rem 0.4rem;
+            font-size: inherit;
+            font-weight: 600;
+            font-family: inherit;
+            color: var(--accent);
+            text-align: center;
+            transition: all 0.2s ease;
+            -moz-appearance: textfield;
+        }
+
+        .focus-indicator-input::-webkit-outer-spin-button,
+        .focus-indicator-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .focus-indicator-input:hover {
+            border-color: var(--accent);
+        }
+
+        .focus-indicator-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .focus-indicator-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .focus-indicator-hint kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.15rem 0.4rem;
+            font-family: inherit;
+            font-size: 0.75rem;
+        }
+
+        .focus-reset-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 8px;
+            cursor: pointer;
+            color: rgb(239, 68, 68);
+            transition: all 0.2s ease;
+            margin-left: 0.5rem;
+        }
+
+        .focus-reset-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgb(239, 68, 68);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .focus-reset-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Focus Modal */
+        .focus-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+
+        .focus-modal.visible {
+            display: flex;
+        }
+
+        .focus-modal-content {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 320px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .focus-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .focus-modal-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .focus-modal-title svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--accent);
+        }
+
+        .focus-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .focus-modal-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .focus-modal-close svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .focus-modal-body {
+            margin-bottom: 1.25rem;
+        }
+
+        .focus-modal-label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .focus-modal-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .focus-modal-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .focus-modal-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .focus-modal-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .focus-modal-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .focus-modal-btn.cancel {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .focus-modal-btn.cancel:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .focus-modal-btn.start {
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            color: white;
+        }
+
+        .focus-modal-btn.start:hover {
+            background: var(--accent-hover);
+        }
+
+        .focus-modal-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .focus-modal-option:hover {
+            background: var(--bg-hover);
+        }
+
+        .focus-modal-option input[type="checkbox"] {
+            display: none;
+        }
+
+        .focus-modal-option .option-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-light);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .focus-modal-option input:checked + .option-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .focus-modal-option .option-checkbox svg {
+            width: 12px;
+            height: 12px;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.15s ease;
+        }
+
+        .focus-modal-option input:checked + .option-checkbox svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .focus-modal-option .option-label {
+            flex: 1;
+        }
+
+        .focus-modal-option .option-label-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .focus-modal-option .option-label-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        /* Export Dropdown */
+        .export-container {
+            position: relative;
+        }
+
+        .export-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(34, 197, 94, 0.7);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.25rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+        }
+
+        .export-toggle-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: rgba(34, 197, 94, 0.6);
+            box-shadow: 0 0 18px rgba(34, 197, 94, 0.25);
+        }
+
+        .export-toggle-btn.active {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgb(34, 197, 94);
+            color: rgb(34, 197, 94);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .export-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .export-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 180px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+
+        .export-dropdown.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .export-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .export-dropdown-item:first-child {
+            border-radius: 10px 10px 0 0;
+        }
+
+        .export-dropdown-item:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+
+        .export-dropdown-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .export-dropdown-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-secondary);
+        }
+
+        .export-dropdown-item .export-format {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Columns Panel */
+        .columns-panel {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .columns-panel.visible {
+            display: block;
+        }
+
+        .columns-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .columns-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .columns-panel-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent);
+        }
+
+        .columns-panel-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .show-all-columns-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .show-all-columns-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .show-all-columns-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .columns-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .column-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .column-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+        }
+
+        .column-toggle.hidden {
+            opacity: 0.5;
+            background: var(--bg-tertiary);
+        }
+
+        .column-toggle input[type="checkbox"] {
+            display: none;
+        }
+
+        .column-toggle .toggle-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .column-toggle input:checked + .toggle-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .column-toggle .toggle-checkbox svg {
+            width: 10px;
+            height: 10px;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.15s ease;
+        }
+
+        .column-toggle input:checked + .toggle-checkbox svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .column-toggle-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .column-toggle:hover .column-toggle-label {
+            color: var(--text-primary);
+        }
+
+        .column-toggle input:checked ~ .column-toggle-label {
+            color: var(--text-primary);
+        }
+
+        .sheet-tabs {
+            display: none;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .sheet-tabs.visible {
+            display: flex;
+        }
+
+        .sheet-tab {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sheet-tab:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .sheet-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 1rem;
+            padding: 1.25rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .filter-panel.visible {
+            display: block;
+        }
+
+        .filter-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-panel-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-panel-title svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--accent);
+        }
+
+        .clear-filters-btn {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-filters-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .clear-filters-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .filter-panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-collapse-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .filter-collapse-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .filter-collapse-btn svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .filter-panel.collapsed .filter-collapse-btn svg {
+            transform: rotate(180deg);
+        }
+
+        .filter-panel.collapsed .filter-columns {
+            display: none;
+        }
+
+        .filter-panel.collapsed .filter-panel-header {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .filter-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .filter-column {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .filter-column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .filter-column-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .filter-column-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+
+        .filter-column-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .filter-column-count.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .filter-column-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .filter-column.expanded .filter-column-body {
+            max-height: 280px;
+        }
+
+        .filter-column-search {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-column-search input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .filter-column-search input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .filter-column-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-select-all {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .filter-select-all:hover {
+            background: var(--bg-hover);
+        }
+
+        .filter-select-all input[type="checkbox"] {
+            display: none;
+        }
+
+        .filter-select-all .filter-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-light);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .filter-select-all input:checked + .filter-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .filter-select-all .filter-checkbox svg {
+            width: 12px;
+            height: 12px;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.15s ease;
+        }
+
+        .filter-select-all input:checked + .filter-checkbox svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .filter-select-all-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .filter-select-all:hover .filter-select-all-label {
+            color: var(--text-primary);
+        }
+
+        .filter-options {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .filter-option:hover {
+            background: var(--bg-hover);
+        }
+
+        .filter-option input[type="checkbox"] {
+            display: none;
+        }
+
+        .filter-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-light);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .filter-option input:checked + .filter-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .filter-checkbox svg {
+            width: 12px;
+            height: 12px;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.15s ease;
+        }
+
+        .filter-option input:checked + .filter-checkbox svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .filter-option-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .filter-option:hover .filter-option-label {
+            color: var(--text-primary);
+        }
+
+        .filter-option input:checked ~ .filter-option-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .filter-option-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .filter-option.unavailable {
+            opacity: 0.5;
+        }
+
+        .filter-option.unavailable .filter-option-count {
+            color: var(--danger);
+        }
+
+        .filter-empty {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Active Filters Bar */
+        .active-filters-wrapper {
+            display: none;
+            margin-top: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .active-filters-wrapper.visible {
+            display: block;
+        }
+
+        .active-filters-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .active-filters-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .active-filters-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .active-filters-title svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--accent);
+        }
+
+        .active-filters-count {
+            background: var(--accent);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+        }
+
+        .active-filters-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .active-filters-toggle svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .active-filters-wrapper.collapsed .active-filters-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        .active-filters-body {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .active-filters-wrapper.collapsed .active-filters-body {
+            display: none;
+        }
+
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .active-filter-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.4rem 0.6rem 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .active-filter-tag .column-name {
+            color: var(--text-primary);
+        }
+
+        .active-filter-tag button {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            padding: 0.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.15s ease;
+        }
+
+        .active-filter-tag button:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .active-filter-tag button svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .stats-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .stats-bar.visible {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .stats-bar span {
+            font-family: monospace;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .table-container {
+            display: none;
+            margin-top: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+            position: relative;
+        }
+
+        .table-container.visible {
+            display: block;
+        }
+
+        .table-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            border-radius: 0;
+            z-index: 2000;
+            animation: none;
+        }
+
+        .table-container.fullscreen .table-scroll {
+            max-height: calc(100vh - 70px);
+        }
+
+        .fullscreen-header {
+            display: none;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            gap: 1.5rem;
+        }
+
+        .table-container.fullscreen .fullscreen-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .fullscreen-stats {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .fullscreen-stats span span {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .fullscreen-stats-divider {
+            color: var(--text-muted);
+        }
+
+        .fullscreen-search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .fullscreen-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .fullscreen-search-container .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .fullscreen-search-container .search-input {
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 2.75rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .fullscreen-search-container .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .fullscreen-search-container .search-clear {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 0.25rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .fullscreen-search-container .search-clear.visible {
+            opacity: 1;
+        }
+
+        .fullscreen-search-container .search-clear:hover {
+            color: var(--text-primary);
+        }
+
+        .fullscreen-search-container .search-clear svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 65vh;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem 1.25rem;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        th:first-child {
+            color: var(--text-muted);
+            width: 60px;
+            text-align: center;
+        }
+
+        th.filterable {
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        th.filterable:hover {
+            background: var(--bg-hover);
+        }
+
+        th.filtered {
+            color: var(--accent);
+        }
+
+        th .th-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        th .filter-indicator {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        td {
+            padding: 0.875rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            max-width: 350px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle !important;
+        }
+
+        td:first-child {
+            font-family: monospace;
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        td.clickable-cell {
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        td.clickable-cell:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        td.clickable-cell:active {
+            background: var(--accent-soft);
+        }
+
+        tr:hover td {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .highlight {
+            background: var(--accent);
+            color: white;
+            padding: 0.1em 0.25em;
+            border-radius: 3px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-muted);
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Cell Context Menu */
+        .cell-menu {
+            position: fixed;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 10000;
+            min-width: 160px;
+            display: none;
+            animation: menuFadeIn 0.15s ease-out;
+        }
+
+        .cell-menu.visible {
+            display: block;
+        }
+
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cell-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .cell-menu-item:hover {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .cell-menu-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .cell-menu-item.success {
+            color: var(--success);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        /* QR Code Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: overlayFadeIn 0.2s ease-out;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        @keyframes overlayFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            animation: modalSlideIn 0.25s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-title svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--accent);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-close svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .qr-code-wrapper {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .qr-code-wrapper canvas {
+            display: block;
+        }
+
+        .qr-value {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            max-width: 300px;
+            word-break: break-all;
+            text-align: center;
+        }
+
+        .qr-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .qr-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .qr-action-btn.primary {
+            background: var(--accent);
+            border: none;
+            color: white;
+        }
+
+        .qr-action-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .qr-action-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .qr-action-btn.secondary:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .qr-action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.875rem 1.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .toast svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--success);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-muted);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.2s ease;
+        }
+
+        .search-clear:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .search-clear.visible {
+            display: flex;
+        }
+
+        .search-clear svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .drop-zone-wrapper {
+            position: relative;
+        }
+
+        .drop-zone-toggle {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+
+        .drop-zone-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .drop-zone-toggle.visible {
+            display: flex;
+        }
+
+        .drop-zone-toggle svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .drop-zone-toggle.collapsed svg {
+            transform: rotate(180deg);
+        }
+
+        .drop-zone.collapsed {
+            padding: 1rem 2rem;
+        }
+
+        .drop-zone.collapsed .drop-zone-icon,
+        .drop-zone.collapsed .drop-zone-text p {
+            display: none;
+        }
+
+        .drop-zone.collapsed .drop-zone-text h3 {
+            margin-bottom: 0;
+            font-size: 1rem;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 1.5rem;
+        }
+
+        .progress-container.visible {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .header-row-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-row-selector label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .header-row-selector select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.35rem 0.6rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .header-row-selector select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .qr-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .qr-toggle-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .qr-toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .qr-toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .qr-toggle input {
+            display: none;
+        }
+
+        .qr-toggle input:checked + .qr-toggle-switch {
+            background: var(--accent);
+        }
+
+        .qr-toggle input:checked + .qr-toggle-switch::after {
+            transform: translateX(20px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.25rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .drop-zone {
+                padding: 2.5rem 1.5rem;
+            }
+
+            .file-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .filter-columns {
+                grid-template-columns: 1fr;
+            }
+
+            th, td {
+                padding: 0.75rem 1rem;
+            }
+
+            .modal {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .theme-toggle button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle button:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .theme-toggle button.active {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .theme-toggle svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .header-wrapper {
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .theme-toggle {
+                position: static;
+                justify-content: center;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .full-drop-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(99, 102, 241, 0.1);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            border: 4px dashed var(--accent);
+            box-sizing: border-box;
+        }
+
+        .full-drop-overlay.visible {
+            display: flex;
+        }
+
+        .full-drop-overlay-content {
+            background: transparent;
+            padding: 4rem;
+            text-align: center;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .full-drop-overlay-content svg {
+            width: 64px;
+            height: 64px;
+            stroke: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .full-drop-overlay-content h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .full-drop-overlay-content p {
+            color: var(--text-secondary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.02); opacity: 0.9; }
+        }
+    </style>
+</head>
+<body>
+    <div class="full-drop-overlay" id="fullDropOverlay">
+        <div class="full-drop-overlay-content">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <h2>Drop your file here</h2>
+            <p>Release to upload your Excel or CSV file</p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header-wrapper">
+            <div class="theme-toggle" id="themeToggle">
+                <button data-theme="system" title="System theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                </button>
+                <button data-theme="light" title="Light theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+                <button data-theme="dark" title="Dark theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+            <header>
+                <h1>DocuWatch</h1>
+                <p class="subtitle">Import, view, filter, and search your spreadsheet data</p>
+            </header>
+        </div>
+
+        <div class="drop-zone-wrapper">
+            <button class="drop-zone-toggle" id="dropZoneToggle" title="Toggle drop zone">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="18 15 12 9 6 15"/>
+                </svg>
+            </button>
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <div class="drop-zone-text">
+                    <h3>Drop your Excel file here</h3>
+                    <p>or <span>click to browse</span></p>
+                    <p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Supports .xlsx, .xls, and .csv files
+                    </p>
+                </div>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progressStatus">Parsing file...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+            </div>
+            <div class="file-details">
+                <div class="file-name" id="fileName">filename.xlsx</div>
+                <div class="file-meta" id="fileMeta">0 sheets • 0 rows</div>
+            </div>
+            <button class="clear-btn" id="clearBtn">Clear</button>
+        </div>
+
+        <div class="sheet-tabs" id="sheetTabs"></div>
+
+        <div class="controls" id="controls">
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search across all columns...">
+                <button class="search-clear" id="searchClear" title="Clear search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <button class="filter-toggle-btn" id="filterToggleBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                <span>Filters</span>
+                <span class="filter-badge" id="filterBadge" style="display: none;">0</span>
+            </button>
+            <button class="columns-toggle-btn" id="columnsToggleBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                </svg>
+                <span>Columns</span>
+                <span class="columns-badge" id="columnsBadge" style="display: none;">0</span>
+            </button>
+            <div class="export-container">
+                <button class="export-toggle-btn" id="exportToggleBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>Export</span>
+                </button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <div class="export-dropdown-item" id="exportXlsx">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>Export as <span class="export-format">XLSX</span></span>
+                    </div>
+                    <div class="export-dropdown-item" id="exportCsv">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>Export as <span class="export-format">CSV</span></span>
+                    </div>
+                    <div class="export-dropdown-item" id="exportJson">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>Export as <span class="export-format">JSON</span></span>
+                    </div>
+                </div>
+            </div>
+            <button class="focus-toggle-btn" id="focusToggleBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+                <span>Focus</span>
+            </button>
+            <button class="expand-toggle-btn" id="expandToggleBtn" title="Expand table">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9"/>
+                    <polyline points="9 21 3 21 3 15"/>
+                    <line x1="21" y1="3" x2="14" y2="10"/>
+                    <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+                <svg class="icon-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="4 14 10 14 10 20"/>
+                    <polyline points="20 10 14 10 14 4"/>
+                    <line x1="14" y1="10" x2="21" y2="3"/>
+                    <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+                <span>Expand</span>
+            </button>
+        </div>
+
+        <div class="filter-panel" id="filterPanel">
+            <div class="filter-panel-header">
+                <div class="filter-panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    Column Filters
+                </div>
+                <div class="filter-panel-actions">
+                    <button class="clear-filters-btn" id="clearFiltersBtn" disabled>Clear All</button>
+                    <button class="filter-collapse-btn" id="filterCollapseBtn" title="Collapse">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="18 15 12 9 6 15"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="filter-columns" id="filterColumns"></div>
+        </div>
+
+        <div class="columns-panel" id="columnsPanel">
+            <div class="columns-panel-header">
+                <div class="columns-panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                    Show/Hide Columns
+                </div>
+                <div class="columns-panel-actions">
+                    <button class="show-all-columns-btn" id="showAllColumnsBtn" disabled>Show All</button>
+                </div>
+            </div>
+            <div class="columns-list" id="columnsList"></div>
+        </div>
+
+        <div class="active-filters-wrapper collapsed" id="activeFiltersWrapper">
+            <div class="active-filters-header" id="activeFiltersHeader">
+                <div class="active-filters-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    Active Filters
+                    <span class="active-filters-count" id="activeFiltersCount">0</span>
+                </div>
+                <div class="active-filters-toggle">
+                    <span>Click to expand</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="active-filters-body">
+                <div class="active-filters" id="activeFilters"></div>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div>Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> rows</div>
+            <div class="header-row-selector">
+                <label>Header row:</label>
+                <select id="headerRowSelect"></select>
+            </div>
+            <div id="columnsCount"><span>0</span> columns</div>
+        </div>
+
+        <div class="table-container" id="tableContainer">
+            <div class="fullscreen-header">
+                <div class="fullscreen-stats">
+                    <span>Showing <span id="fullscreenVisibleCount">0</span> of <span id="fullscreenTotalCount">0</span> rows</span>
+                    <span class="fullscreen-stats-divider">•</span>
+                    <span><span id="fullscreenColumnsCount">0</span> columns</span>
+                </div>
+                <div class="fullscreen-search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" class="search-input" id="fullscreenSearchInput" placeholder="Search across all columns...">
+                    <button class="search-clear" id="fullscreenSearchClear" title="Clear search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="fullscreen-actions">
+                    <div class="export-container">
+                        <button class="export-toggle-btn" id="fullscreenExportBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            <span>Export</span>
+                        </button>
+                        <div class="export-dropdown" id="fullscreenExportDropdown">
+                            <div class="export-dropdown-item" id="fullscreenExportXlsx">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                                <span>Export as <span class="export-format">XLSX</span></span>
+                            </div>
+                            <div class="export-dropdown-item" id="fullscreenExportCsv">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                </svg>
+                                <span>Export as <span class="export-format">CSV</span></span>
+                            </div>
+                            <div class="export-dropdown-item" id="fullscreenExportJson">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span>Export as <span class="export-format">JSON</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="focus-toggle-btn" id="fullscreenFocusBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                        </svg>
+                        <span>Focus</span>
+                    </button>
+                    <button class="expand-toggle-btn active" id="fullscreenCollapseBtn" title="Exit fullscreen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="4 14 10 14 10 20"/>
+                            <polyline points="20 10 14 10 14 4"/>
+                            <line x1="14" y1="10" x2="21" y2="3"/>
+                            <line x1="3" y1="21" x2="10" y2="14"/>
+                        </svg>
+                        <span>Collapse</span>
+                    </button>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cell Context Menu -->
+    <div class="cell-menu" id="cellMenu">
+        <div class="cell-menu-item" id="copyMenuItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Copy</span>
+        </div>
+        <div class="cell-menu-item" id="qrMenuItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span>QR Code</span>
+        </div>
+    </div>
+
+    <!-- Header Context Menu -->
+    <div class="header-context-menu" id="headerContextMenu">
+        <div class="header-context-menu-item" id="alignLeftItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="15" y2="12"/>
+                <line x1="3" y1="18" x2="18" y2="18"/>
+            </svg>
+            <span>Align Left</span>
+        </div>
+        <div class="header-context-menu-item" id="alignCenterItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="6" y1="12" x2="18" y2="12"/>
+                <line x1="4" y1="18" x2="20" y2="18"/>
+            </svg>
+            <span>Align Center</span>
+        </div>
+        <div class="header-context-menu-item" id="alignRightItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="9" y1="12" x2="21" y2="12"/>
+                <line x1="6" y1="18" x2="21" y2="18"/>
+            </svg>
+            <span>Align Right</span>
+        </div>
+        <div class="header-context-menu-divider"></div>
+        <div class="header-context-menu-item" id="generateQrColumnItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span>Generate QR Column</span>
+        </div>
+        <div class="header-context-menu-item" id="generateQrColumnCapsItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span>Generate QR Column (ALL CAPS)</span>
+        </div>
+        <div class="header-context-menu-item danger" id="removeQrColumnItem" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span>Remove QR Column</span>
+        </div>
+        <div class="header-context-menu-divider" id="hideColumnDivider"></div>
+        <div class="header-context-menu-item" id="hideColumnItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+            <span>Hide Column</span>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                    QR Code
+                </div>
+                <button class="modal-close" id="qrModalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="qr-container">
+                <div class="qr-code-wrapper" id="qrCodeWrapper"></div>
+                <div class="qr-value" id="qrValue"></div>
+                <label class="qr-toggle">
+                    <span class="qr-toggle-label">ALL CAPS</span>
+                    <input type="checkbox" id="qrCapsToggle">
+                    <span class="qr-toggle-switch"></span>
+                </label>
+                <div class="qr-actions">
+                    <button class="qr-action-btn secondary" id="qrCopyBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        Copy Value
+                    </button>
+                    <button class="qr-action-btn primary" id="qrDownloadBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download QR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focus Mode Indicator -->
+    <div class="focus-indicator" id="focusIndicator">
+        <span>Row <input type="number" class="focus-indicator-input" id="focusRowInput" min="1" value="1"> of <span id="focusTotalRows">0</span></span>
+        <div class="focus-indicator-hint">
+            <kbd>↑</kbd><kbd>↓</kbd> rows • <kbd>←</kbd><kbd>→</kbd> scroll • <kbd>Esc</kbd> exit
+        </div>
+        <button class="focus-reset-btn" id="focusResetBtn" title="Reset to row 1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"/>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Focus Modal -->
+    <div class="focus-modal" id="focusModal">
+        <div class="focus-modal-content">
+            <div class="focus-modal-header">
+                <div class="focus-modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                    </svg>
+                    <span>Focus Mode</span>
+                </div>
+                <button class="focus-modal-close" id="focusModalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="focus-modal-body">
+                <label class="focus-modal-label" for="focusStartRow">Start from row:</label>
+                <input type="number" class="focus-modal-input" id="focusStartRow" min="1" value="1">
+                <div class="focus-modal-hint" id="focusModalHint">Enter a row number (1 to <span id="focusMaxRow">0</span>)</div>
+                <label class="focus-modal-option">
+                    <input type="checkbox" id="focusEnlargeOption">
+                    <span class="option-checkbox">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </span>
+                    <div class="option-label">
+                        <div class="option-label-title">Enlarge focused row</div>
+                        <div class="option-label-desc">Larger text and QR codes for better readability</div>
+                    </div>
+                </label>
+            </div>
+            <div class="focus-modal-actions">
+                <button class="focus-modal-btn cancel" id="focusModalCancel">Cancel</button>
+                <button class="focus-modal-btn start" id="focusModalStart">Start Focus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hide Column Confirmation Modal -->
+    <div class="focus-modal" id="hideColumnModal">
+        <div class="focus-modal-content">
+            <div class="focus-modal-header">
+                <h3>Hide Column</h3>
+                <button class="focus-modal-close" id="hideColumnModalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="focus-modal-body">
+                <p style="margin: 0; color: var(--text-secondary);">Are you sure you want to hide the column "<strong id="hideColumnName"></strong>"?</p>
+                <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">You can show it again from the Show/Hide Columns panel.</p>
+            </div>
+            <div class="focus-modal-actions">
+                <button class="focus-modal-btn cancel" id="hideColumnModalCancel">Cancel</button>
+                <button class="focus-modal-btn start" id="hideColumnModalConfirm">Hide Column</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span id="toastMessage">Copied to clipboard!</span>
+    </div>
+
+    <!-- SheetJS for Excel parsing - will be loaded from CDN if online, works without for basic CSV -->
+    <script>
+        // Fallback CSV parser if SheetJS not available
+        if (typeof XLSX === 'undefined') {
+            window.XLSX = {
+                read: function(data, opts) {
+                    const text = new TextDecoder().decode(data);
+                    const lines = text.split(/\r?\n/);
+                    const sheet = {};
+                    let maxCol = 0;
+                    
+                    lines.forEach((line, r) => {
+                        if (!line.trim()) return;
+                        const cols = line.split(',');
+                        cols.forEach((cell, c) => {
+                            const ref = String.fromCharCode(65 + c) + (r + 1);
+                            sheet[ref] = { v: cell.replace(/^"|"$/g, '') };
+                            maxCol = Math.max(maxCol, c);
+                        });
+                    });
+                    
+                    sheet['!ref'] = 'A1:' + String.fromCharCode(65 + maxCol) + lines.length;
+                    
+                    return {
+                        SheetNames: ['Sheet1'],
+                        Sheets: { Sheet1: sheet }
+                    };
+                },
+                utils: {
+                    decode_range: function(ref) {
+                        const match = ref.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+                        if (!match) return { s: { r: 0, c: 0 }, e: { r: 0, c: 0 } };
+                        return {
+                            s: { r: parseInt(match[2]) - 1, c: match[1].charCodeAt(0) - 65 },
+                            e: { r: parseInt(match[4]) - 1, c: match[3].charCodeAt(0) - 65 }
+                        };
+                    },
+                    sheet_to_json: function(sheet, opts) {
+                        const range = this.decode_range(sheet['!ref'] || 'A1:A1');
+                        const result = [];
+                        for (let r = range.s.r; r <= range.e.r; r++) {
+                            const row = [];
+                            for (let c = range.s.c; c <= range.e.c; c++) {
+                                const ref = String.fromCharCode(65 + c) + (r + 1);
+                                row.push(sheet[ref] ? sheet[ref].v : '');
+                            }
+                            result.push(row);
+                        }
+                        return result;
+                    }
+                }
+            };
+        }
+    </script>
+
+    <script>
+        // State
+        let workbook = null;
+        let currentSheet = null;
+        let rawData = [];
+        let allData = [];
+        let headers = [];
+        let currentFilteredData = [];
+        let columnFilters = {};
+        let columnValues = {};
+        let selectedCellValue = '';
+        let headerRowIndex = 0;
+        let hiddenColumns = new Set();
+        let currentFileName = '';
+        let qrColumns = new Map();      // sourceColIdx -> { qrColIdx, headerName, allCaps: boolean }
+        let columnAlignments = new Map(); // colIdx -> 'left' | 'center' | 'right'
+        let contextMenuSourceCol = null; // Currently right-clicked column index
+        const qrCodeCache = new Map();   // Cache for generated QR data URLs
+        let focusModeEnabled = false;
+        let focusedRowIndex = 0;
+
+        // Elements
+        const dropZone = document.getElementById('dropZone');
+        const dropZoneToggle = document.getElementById('dropZoneToggle');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileMeta = document.getElementById('fileMeta');
+        const clearBtn = document.getElementById('clearBtn');
+        const sheetTabs = document.getElementById('sheetTabs');
+        const controls = document.getElementById('controls');
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        const fullscreenSearchInput = document.getElementById('fullscreenSearchInput');
+        const fullscreenSearchClear = document.getElementById('fullscreenSearchClear');
+        const fullscreenVisibleCount = document.getElementById('fullscreenVisibleCount');
+        const fullscreenTotalCount = document.getElementById('fullscreenTotalCount');
+        const fullscreenColumnsCount = document.getElementById('fullscreenColumnsCount');
+        const fullscreenExportBtn = document.getElementById('fullscreenExportBtn');
+        const fullscreenExportDropdown = document.getElementById('fullscreenExportDropdown');
+        const fullscreenExportXlsx = document.getElementById('fullscreenExportXlsx');
+        const fullscreenExportCsv = document.getElementById('fullscreenExportCsv');
+        const fullscreenExportJson = document.getElementById('fullscreenExportJson');
+        const fullscreenFocusBtn = document.getElementById('fullscreenFocusBtn');
+        const fullscreenCollapseBtn = document.getElementById('fullscreenCollapseBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressStatus = document.getElementById('progressStatus');
+        const progressPercent = document.getElementById('progressPercent');
+        const fullDropOverlay = document.getElementById('fullDropOverlay');
+        const themeToggle = document.getElementById('themeToggle');
+        const filterToggleBtn = document.getElementById('filterToggleBtn');
+        const filterBadge = document.getElementById('filterBadge');
+        const filterPanel = document.getElementById('filterPanel');
+        const filterColumns = document.getElementById('filterColumns');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        const filterCollapseBtn = document.getElementById('filterCollapseBtn');
+        const activeFiltersWrapper = document.getElementById('activeFiltersWrapper');
+        const activeFiltersHeader = document.getElementById('activeFiltersHeader');
+        const activeFiltersCount = document.getElementById('activeFiltersCount');
+        const activeFilters = document.getElementById('activeFilters');
+        const statsBar = document.getElementById('statsBar');
+        const visibleCount = document.getElementById('visibleCount');
+        const totalCount = document.getElementById('totalCount');
+        const columnsCount = document.getElementById('columnsCount');
+        const headerRowSelect = document.getElementById('headerRowSelect');
+        const tableContainer = document.getElementById('tableContainer');
+        const tableHead = document.getElementById('tableHead');
+        const tableBody = document.getElementById('tableBody');
+        const cellMenu = document.getElementById('cellMenu');
+        const copyMenuItem = document.getElementById('copyMenuItem');
+        const qrMenuItem = document.getElementById('qrMenuItem');
+        const qrModal = document.getElementById('qrModal');
+        const qrModalClose = document.getElementById('qrModalClose');
+        const qrCodeWrapper = document.getElementById('qrCodeWrapper');
+        const qrValue = document.getElementById('qrValue');
+        const qrCopyBtn = document.getElementById('qrCopyBtn');
+        const qrDownloadBtn = document.getElementById('qrDownloadBtn');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const columnsToggleBtn = document.getElementById('columnsToggleBtn');
+        const columnsBadge = document.getElementById('columnsBadge');
+        const columnsPanel = document.getElementById('columnsPanel');
+        const columnsList = document.getElementById('columnsList');
+        const showAllColumnsBtn = document.getElementById('showAllColumnsBtn');
+        const exportToggleBtn = document.getElementById('exportToggleBtn');
+        const exportDropdown = document.getElementById('exportDropdown');
+        const exportXlsx = document.getElementById('exportXlsx');
+        const exportCsv = document.getElementById('exportCsv');
+        const exportJson = document.getElementById('exportJson');
+        const headerContextMenu = document.getElementById('headerContextMenu');
+        const generateQrColumnItem = document.getElementById('generateQrColumnItem');
+        const generateQrColumnCapsItem = document.getElementById('generateQrColumnCapsItem');
+        const removeQrColumnItem = document.getElementById('removeQrColumnItem');
+        const alignLeftItem = document.getElementById('alignLeftItem');
+        const alignCenterItem = document.getElementById('alignCenterItem');
+        const alignRightItem = document.getElementById('alignRightItem');
+        const hideColumnDivider = document.getElementById('hideColumnDivider');
+        const hideColumnItem = document.getElementById('hideColumnItem');
+        const hideColumnModal = document.getElementById('hideColumnModal');
+        const hideColumnModalClose = document.getElementById('hideColumnModalClose');
+        const hideColumnName = document.getElementById('hideColumnName');
+        const hideColumnModalCancel = document.getElementById('hideColumnModalCancel');
+        const hideColumnModalConfirm = document.getElementById('hideColumnModalConfirm');
+        const focusToggleBtn = document.getElementById('focusToggleBtn');
+        const expandToggleBtn = document.getElementById('expandToggleBtn');
+        const focusIndicator = document.getElementById('focusIndicator');
+        const focusRowInput = document.getElementById('focusRowInput');
+        const focusTotalRows = document.getElementById('focusTotalRows');
+        const focusResetBtn = document.getElementById('focusResetBtn');
+        const focusModal = document.getElementById('focusModal');
+        const focusModalClose = document.getElementById('focusModalClose');
+        const focusStartRow = document.getElementById('focusStartRow');
+        const focusMaxRow = document.getElementById('focusMaxRow');
+        const focusModalCancel = document.getElementById('focusModalCancel');
+        const focusModalStart = document.getElementById('focusModalStart');
+        const focusEnlargeOption = document.getElementById('focusEnlargeOption');
+
+        // Theme functions
+        function initTheme() {
+            const saved = localStorage.getItem('theme');
+            const theme = saved || 'system';
+            setTheme(theme);
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            if (theme === 'system') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            themeToggle.querySelectorAll('button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.theme === theme);
+            });
+        }
+
+        themeToggle.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (btn) setTheme(btn.dataset.theme);
+        });
+
+        initTheme();
+
+        // Full page drag and drop
+        let dragCounter = 0;
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            if (e.dataTransfer.types.includes('Files')) fullDropOverlay.classList.add('visible');
+        });
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) fullDropOverlay.classList.remove('visible');
+        });
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            fullDropOverlay.classList.remove('visible');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        // Event Listeners
+        dropZone.addEventListener('click', (e) => {
+            if (!dropZone.classList.contains('collapsed')) fileInput.click();
+        });
+        dropZoneToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropZone.classList.toggle('collapsed');
+            dropZoneToggle.classList.toggle('collapsed');
+        });
+        fileInput.addEventListener('change', handleFileSelect);
+        clearBtn.addEventListener('click', clearData);
+        searchInput.addEventListener('input', (e) => {
+            searchClear.classList.toggle('visible', searchInput.value.length > 0);
+            fullscreenSearchInput.value = searchInput.value;
+            fullscreenSearchClear.classList.toggle('visible', searchInput.value.length > 0);
+            debounce(applyFiltersAndSearch, 200)();
+        });
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            fullscreenSearchInput.value = '';
+            searchClear.classList.remove('visible');
+            fullscreenSearchClear.classList.remove('visible');
+            applyFiltersAndSearch();
+        });
+        fullscreenSearchInput.addEventListener('input', (e) => {
+            fullscreenSearchClear.classList.toggle('visible', fullscreenSearchInput.value.length > 0);
+            searchInput.value = fullscreenSearchInput.value;
+            searchClear.classList.toggle('visible', fullscreenSearchInput.value.length > 0);
+            debounce(applyFiltersAndSearch, 200)();
+        });
+        fullscreenSearchClear.addEventListener('click', () => {
+            fullscreenSearchInput.value = '';
+            searchInput.value = '';
+            fullscreenSearchClear.classList.remove('visible');
+            searchClear.classList.remove('visible');
+            applyFiltersAndSearch();
+        });
+        filterToggleBtn.addEventListener('click', toggleFilterPanel);
+        clearFiltersBtn.addEventListener('click', clearAllFilters);
+        filterCollapseBtn.addEventListener('click', () => {
+            filterPanel.classList.toggle('collapsed');
+        });
+        activeFiltersHeader.addEventListener('click', () => {
+            activeFiltersWrapper.classList.toggle('collapsed');
+            const toggleText = activeFiltersWrapper.querySelector('.active-filters-toggle span');
+            toggleText.textContent = activeFiltersWrapper.classList.contains('collapsed') ? 'Click to expand' : 'Click to collapse';
+        });
+        columnsToggleBtn.addEventListener('click', toggleColumnsPanel);
+        showAllColumnsBtn.addEventListener('click', showAllColumns);
+
+        // Export events
+        exportToggleBtn.addEventListener('click', toggleExportDropdown);
+        exportXlsx.addEventListener('click', () => exportData('xlsx'));
+        exportCsv.addEventListener('click', () => exportData('csv'));
+        exportJson.addEventListener('click', () => exportData('json'));
+
+        // Fullscreen export events
+        fullscreenExportBtn.addEventListener('click', toggleFullscreenExportDropdown);
+        fullscreenExportXlsx.addEventListener('click', () => { exportData('xlsx'); closeFullscreenExportDropdown(); });
+        fullscreenExportCsv.addEventListener('click', () => { exportData('csv'); closeFullscreenExportDropdown(); });
+        fullscreenExportJson.addEventListener('click', () => { exportData('json'); closeFullscreenExportDropdown(); });
+        fullscreenFocusBtn.addEventListener('click', toggleFocusMode);
+
+        // Table expand/fullscreen
+        expandToggleBtn.addEventListener('click', toggleTableFullscreen);
+        fullscreenCollapseBtn.addEventListener('click', toggleTableFullscreen);
+
+        // Header context menu events
+        generateQrColumnItem.addEventListener('click', () => generateQrColumn(false));
+        generateQrColumnCapsItem.addEventListener('click', () => generateQrColumn(true));
+        removeQrColumnItem.addEventListener('click', removeQrColumn);
+
+        // Alignment events
+        alignLeftItem.addEventListener('click', () => setColumnAlignment('left'));
+        alignCenterItem.addEventListener('click', () => setColumnAlignment('center'));
+        alignRightItem.addEventListener('click', () => setColumnAlignment('right'));
+
+        // Hide column events
+        hideColumnItem.addEventListener('click', openHideColumnModal);
+        hideColumnModalClose.addEventListener('click', closeHideColumnModal);
+        hideColumnModalCancel.addEventListener('click', closeHideColumnModal);
+        hideColumnModalConfirm.addEventListener('click', confirmHideColumn);
+        hideColumnModal.addEventListener('click', (e) => {
+            if (e.target === hideColumnModal) closeHideColumnModal();
+        });
+
+        // Focus mode events
+        focusToggleBtn.addEventListener('click', toggleFocusMode);
+        tableContainer.addEventListener('wheel', handleFocusModeScroll, { passive: false });
+        focusModalClose.addEventListener('click', closeFocusModal);
+        focusModalCancel.addEventListener('click', closeFocusModal);
+        focusModalStart.addEventListener('click', () => startFocusMode(focusStartRow.value));
+        focusModal.addEventListener('click', (e) => {
+            if (e.target === focusModal) closeFocusModal();
+        });
+        focusStartRow.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                startFocusMode(focusStartRow.value);
+            }
+        });
+
+        // Focus row input in indicator bar
+        focusRowInput.addEventListener('change', (e) => {
+            jumpToFocusRow(e.target.value);
+        });
+        focusRowInput.addEventListener('keydown', (e) => {
+            e.stopPropagation(); // Prevent arrow keys from navigating rows while typing
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                jumpToFocusRow(e.target.value);
+                e.target.blur();
+            } else if (e.key === 'Escape') {
+                e.target.value = focusedRowIndex + 1;
+                e.target.blur();
+            }
+        });
+        focusResetBtn.addEventListener('click', () => {
+            jumpToFocusRow(1);
+        });
+
+        // Cell menu events
+        copyMenuItem.addEventListener('click', handleCopy);
+        qrMenuItem.addEventListener('click', handleQrCode);
+        document.addEventListener('click', (e) => {
+            if (!cellMenu.contains(e.target) && !e.target.closest('.clickable-cell')) {
+                closeCellMenu();
+            }
+            if (!headerContextMenu.contains(e.target)) {
+                closeHeaderContextMenu();
+            }
+        });
+
+        // QR Modal events
+        qrModalClose.addEventListener('click', closeQrModal);
+        qrModal.addEventListener('click', (e) => {
+            if (e.target === qrModal) closeQrModal();
+        });
+        qrCopyBtn.addEventListener('click', () => {
+            copyToClipboard(selectedCellValue);
+        });
+        qrDownloadBtn.addEventListener('click', downloadQrCode);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCellMenu();
+                closeQrModal();
+                closeHeaderContextMenu();
+                closeFocusModal();
+                closeHideColumnModal();
+                exitTableFullscreen();
+                if (focusModeEnabled) {
+                    stopFocusMode();
+                }
+            }
+            // Focus mode navigation
+            if (focusModeEnabled) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    focusNextRow();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    focusPreviousRow();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    scrollTableHorizontal(-200);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    scrollTableHorizontal(200);
+                }
+            }
+        });
+
+        // Drag and Drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        // Functions
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        }
+
+        function updateProgress(percent, status) {
+            progressFill.style.width = percent + '%';
+            progressPercent.textContent = Math.round(percent) + '%';
+            if (status) progressStatus.textContent = status;
+        }
+
+        function processFile(file) {
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+                'text/csv'
+            ];
+            const validExtensions = ['.xlsx', '.xls', '.csv'];
+            const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+
+            if (!validTypes.includes(file.type) && !validExtensions.includes(fileExt)) {
+                alert('Please upload a valid Excel or CSV file.');
+                return;
+            }
+
+            progressContainer.classList.add('visible');
+            updateProgress(0, 'Reading file...');
+
+            const reader = new FileReader();
+            reader.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 40;
+                    updateProgress(percent, 'Reading file...');
+                }
+            };
+            reader.onload = (e) => {
+                try {
+                    updateProgress(50, 'Parsing spreadsheet...');
+                    setTimeout(() => {
+                        const data = new Uint8Array(e.target.result);
+                        workbook = XLSX.read(data, { type: 'array' });
+
+                        updateProgress(80, 'Processing data...');
+
+                        fileName.textContent = file.name;
+                        currentFileName = file.name;
+                        const totalRows = workbook.SheetNames.reduce((acc, name) => {
+                            const sheet = workbook.Sheets[name];
+                            const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+                            return acc + (range.e.r - range.s.r + 1);
+                        }, 0);
+                        fileMeta.textContent = `${workbook.SheetNames.length} sheet${workbook.SheetNames.length > 1 ? 's' : ''} • ${totalRows.toLocaleString()} rows total`;
+                        fileInfo.classList.add('visible');
+
+                        dropZoneToggle.classList.add('visible');
+                        dropZone.classList.add('collapsed');
+                        dropZoneToggle.classList.add('collapsed');
+
+                        updateProgress(90, 'Rendering table...');
+
+                        createSheetTabs();
+                        loadSheet(workbook.SheetNames[0]);
+
+                        controls.classList.add('visible');
+                        statsBar.classList.add('visible');
+                        tableContainer.classList.add('visible');
+
+                        updateProgress(100, 'Complete!');
+                        setTimeout(() => {
+                            progressContainer.classList.remove('visible');
+                            progressFill.style.width = '0%';
+                        }, 500);
+                    }, 10);
+                } catch (error) {
+                    progressContainer.classList.remove('visible');
+                    console.error('Error parsing file:', error);
+                    alert('Error parsing file. Please make sure it\'s a valid Excel or CSV file.');
+                }
+            };
+            reader.onerror = () => {
+                progressContainer.classList.remove('visible');
+                alert('Error reading file');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function createSheetTabs() {
+            sheetTabs.innerHTML = '';
+            if (workbook.SheetNames.length > 1) {
+                workbook.SheetNames.forEach((name, index) => {
+                    const tab = document.createElement('button');
+                    tab.className = 'sheet-tab' + (index === 0 ? ' active' : '');
+                    tab.textContent = name;
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        loadSheet(name);
+                    });
+                    sheetTabs.appendChild(tab);
+                });
+                sheetTabs.classList.add('visible');
+            } else {
+                sheetTabs.classList.remove('visible');
+            }
+        }
+
+        function loadSheet(sheetName) {
+            currentSheet = sheetName;
+            const sheet = workbook.Sheets[sheetName];
+            rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+
+            columnFilters = {};
+            columnValues = {};
+            headerRowIndex = 0;
+
+            populateHeaderRowOptions();
+            applyHeaderRow();
+            searchInput.value = '';
+            fullscreenSearchInput.value = '';
+        }
+
+        function populateHeaderRowOptions() {
+            headerRowSelect.innerHTML = '';
+            const maxRows = Math.min(rawData.length, 20);
+            for (let i = 0; i < maxRows; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Row ${i + 1}`;
+                const preview = rawData[i]?.slice(0, 3).map(c => String(c || '').substring(0, 15)).join(', ');
+                if (preview) opt.textContent += ` (${preview}...)`;
+                headerRowSelect.appendChild(opt);
+            }
+            headerRowSelect.value = headerRowIndex;
+        }
+
+        headerRowSelect.addEventListener('change', () => {
+            headerRowIndex = parseInt(headerRowSelect.value);
+            columnFilters = {};
+            applyHeaderRow();
+        });
+
+        function applyHeaderRow() {
+            if (rawData.length === 0) {
+                headers = [];
+                allData = [];
+                hiddenColumns.clear();
+                renderFilterPanel();
+                renderColumnsPanel();
+                renderTable([]);
+                return;
+            }
+
+            if (rawData.length > headerRowIndex) {
+                headers = rawData[headerRowIndex].map((h, i) => h || `Column ${i + 1}`);
+                allData = rawData.slice(headerRowIndex + 1);
+            } else {
+                headers = [];
+                allData = [];
+            }
+
+            // Clear hidden columns that no longer exist
+            hiddenColumns.forEach(colIdx => {
+                if (colIdx >= headers.length) {
+                    hiddenColumns.delete(colIdx);
+                }
+            });
+
+            calculateColumnValues();
+            columnsCount.innerHTML = `<span>${headers.length}</span> columns`;
+            fullscreenColumnsCount.textContent = `${headers.length}`;
+
+            renderFilterPanel();
+            renderColumnsPanel();
+            renderTable(allData);
+            updateFilterUI();
+            updateColumnsUI();
+        }
+
+        function calculateColumnValues() {
+            columnValues = {};
+            headers.forEach((_, colIdx) => {
+                columnValues[colIdx] = {};
+            });
+
+            allData.forEach(row => {
+                headers.forEach((_, colIdx) => {
+                    const value = String(row[colIdx] !== undefined ? row[colIdx] : '');
+                    if (!columnValues[colIdx][value]) {
+                        columnValues[colIdx][value] = 0;
+                    }
+                    columnValues[colIdx][value]++;
+                });
+            });
+        }
+
+        function renderFilterPanel() {
+            filterColumns.innerHTML = '';
+
+            headers.forEach((header, colIdx) => {
+                // Skip hidden columns
+                if (hiddenColumns.has(colIdx)) return;
+
+                const values = columnValues[colIdx] || {};
+                const sortedValues = Object.entries(values).sort((a, b) => b[1] - a[1]);
+                const uniqueCount = sortedValues.length;
+
+                const column = document.createElement('div');
+                column.className = 'filter-column';
+                column.innerHTML = `
+                    <div class="filter-column-header" data-col="${colIdx}">
+                        <span class="filter-column-title" title="${escapeHtml(String(header))}">${escapeHtml(String(header))}</span>
+                        <span class="filter-column-count" id="filterCount-${colIdx}">${uniqueCount}</span>
+                    </div>
+                    <div class="filter-column-body">
+                        <div class="filter-column-search">
+                            <input type="text" placeholder="Search values..." data-col="${colIdx}">
+                        </div>
+                        ${sortedValues.length > 0 ? `
+                        <label class="filter-select-all" data-col="${colIdx}">
+                            <input type="checkbox" class="select-all-checkbox" data-col="${colIdx}">
+                            <span class="filter-checkbox">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </span>
+                            <span class="filter-select-all-label">Select All</span>
+                        </label>
+                        ` : ''}
+                        <div class="filter-options" id="filterOptions-${colIdx}">
+                            ${sortedValues.length === 0 ? '<div class="filter-empty">No values</div>' : 
+                                sortedValues.map(([value, count]) => `
+                                    <label class="filter-option" data-value="${escapeAttr(value)}">
+                                        <input type="checkbox" data-col="${colIdx}" data-value="${escapeAttr(value)}">
+                                        <span class="filter-checkbox">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"/>
+                                            </svg>
+                                        </span>
+                                        <span class="filter-option-label" title="${escapeAttr(value)}">${value === '' ? '(Empty)' : escapeHtml(value)}</span>
+                                        <span class="filter-option-count">${count}</span>
+                                    </label>
+                                `).join('')
+                            }
+                        </div>
+                    </div>
+                `;
+
+                const headerEl = column.querySelector('.filter-column-header');
+                headerEl.addEventListener('click', () => {
+                    column.classList.toggle('expanded');
+                });
+
+                const searchEl = column.querySelector('.filter-column-search input');
+                searchEl.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const options = column.querySelectorAll('.filter-option');
+                    options.forEach(opt => {
+                        const value = opt.dataset.value.toLowerCase();
+                        opt.style.display = value.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+                searchEl.addEventListener('click', (e) => e.stopPropagation());
+
+                const selectAllEl = column.querySelector('.select-all-checkbox');
+                if (selectAllEl) {
+                    selectAllEl.addEventListener('change', (e) => {
+                        const col = parseInt(e.target.dataset.col);
+                        const options = column.querySelectorAll('.filter-option');
+                        const isChecked = e.target.checked;
+
+                        if (!columnFilters[col]) {
+                            columnFilters[col] = new Set();
+                        }
+
+                        options.forEach(opt => {
+                            // Only select/deselect visible and available options
+                            if (opt.style.display !== 'none' && !opt.classList.contains('unavailable')) {
+                                const value = opt.dataset.value;
+                                const checkbox = opt.querySelector('input[type="checkbox"]');
+                                if (isChecked) {
+                                    columnFilters[col].add(value);
+                                    checkbox.checked = true;
+                                } else {
+                                    columnFilters[col].delete(value);
+                                    checkbox.checked = false;
+                                }
+                            }
+                        });
+
+                        if (columnFilters[col].size === 0) {
+                            delete columnFilters[col];
+                        }
+
+                        updateFilterUI();
+                        applyFiltersAndSearch();
+                    });
+                    selectAllEl.addEventListener('click', (e) => e.stopPropagation());
+                }
+
+                const checkboxes = column.querySelectorAll('.filter-option input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const col = parseInt(e.target.dataset.col);
+                        const value = e.target.dataset.value;
+                        
+                        if (!columnFilters[col]) {
+                            columnFilters[col] = new Set();
+                        }
+
+                        if (e.target.checked) {
+                            columnFilters[col].add(value);
+                        } else {
+                            columnFilters[col].delete(value);
+                            if (columnFilters[col].size === 0) {
+                                delete columnFilters[col];
+                            }
+                        }
+
+                        updateFilterUI();
+                        applyFiltersAndSearch();
+                    });
+                    cb.addEventListener('click', (e) => e.stopPropagation());
+                });
+
+                filterColumns.appendChild(column);
+            });
+        }
+
+        function toggleFilterPanel() {
+            filterPanel.classList.toggle('visible');
+            filterToggleBtn.classList.toggle('active');
+        }
+
+        function toggleColumnsPanel() {
+            columnsPanel.classList.toggle('visible');
+            columnsToggleBtn.classList.toggle('active');
+        }
+
+        function renderColumnsPanel() {
+            columnsList.innerHTML = '';
+
+            const qrIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+            </svg>`;
+
+            headers.forEach((header, colIdx) => {
+                const isVisible = !hiddenColumns.has(colIdx);
+                const isQrCol = isQrColumnIndex(colIdx);
+                const toggle = document.createElement('label');
+                toggle.className = `column-toggle ${isVisible ? '' : 'hidden'} ${isQrCol ? 'qr-column' : ''}`;
+
+                const labelContent = isQrCol
+                    ? `<span class="column-name">${qrIcon}${escapeHtml(String(header))}</span>`
+                    : escapeHtml(String(header));
+
+                toggle.innerHTML = `
+                    <input type="checkbox" data-col="${colIdx}" ${isVisible ? 'checked' : ''}>
+                    <span class="toggle-checkbox">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </span>
+                    <span class="column-toggle-label" title="${escapeAttr(String(header))}">${labelContent}</span>
+                `;
+
+                const checkbox = toggle.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', (e) => {
+                    const col = parseInt(e.target.dataset.col);
+                    if (e.target.checked) {
+                        hiddenColumns.delete(col);
+                        toggle.classList.remove('hidden');
+                    } else {
+                        hiddenColumns.add(col);
+                        toggle.classList.add('hidden');
+                    }
+                    updateColumnsUI();
+                    renderFilterPanel();
+                    applyFiltersAndSearch();
+                });
+
+                columnsList.appendChild(toggle);
+            });
+        }
+
+        function updateColumnsUI() {
+            const hiddenCount = hiddenColumns.size;
+
+            if (hiddenCount > 0) {
+                columnsBadge.textContent = hiddenCount;
+                columnsBadge.style.display = '';
+                columnsToggleBtn.classList.add('active');
+            } else {
+                columnsBadge.style.display = 'none';
+                if (!columnsPanel.classList.contains('visible')) {
+                    columnsToggleBtn.classList.remove('active');
+                }
+            }
+
+            showAllColumnsBtn.disabled = hiddenCount === 0;
+
+            // Update visible columns count
+            const visibleColumnsCount = headers.length - hiddenCount;
+            columnsCount.innerHTML = `<span>${visibleColumnsCount}</span> of ${headers.length} columns`;
+            fullscreenColumnsCount.textContent = `${visibleColumnsCount} of ${headers.length}`;
+        }
+
+        function showAllColumns() {
+            hiddenColumns.clear();
+
+            columnsList.querySelectorAll('.column-toggle').forEach(toggle => {
+                toggle.classList.remove('hidden');
+                toggle.querySelector('input[type="checkbox"]').checked = true;
+            });
+
+            updateColumnsUI();
+            renderFilterPanel();
+            applyFiltersAndSearch();
+        }
+
+        // Export Functions
+        function toggleExportDropdown(e) {
+            e.stopPropagation();
+            const isVisible = exportDropdown.classList.contains('visible');
+            closeAllDropdowns();
+            if (!isVisible) {
+                exportDropdown.classList.add('visible');
+                exportToggleBtn.classList.add('active');
+            }
+        }
+
+        function toggleFullscreenExportDropdown(e) {
+            e.stopPropagation();
+            const isVisible = fullscreenExportDropdown.classList.contains('visible');
+            closeAllDropdowns();
+            if (!isVisible) {
+                fullscreenExportDropdown.classList.add('visible');
+                fullscreenExportBtn.classList.add('active');
+            }
+        }
+
+        function closeFullscreenExportDropdown() {
+            fullscreenExportDropdown.classList.remove('visible');
+            fullscreenExportBtn.classList.remove('active');
+        }
+
+        function toggleTableFullscreen() {
+            tableContainer.classList.toggle('fullscreen');
+            expandToggleBtn.classList.toggle('active', tableContainer.classList.contains('fullscreen'));
+        }
+
+        function exitTableFullscreen() {
+            tableContainer.classList.remove('fullscreen');
+            expandToggleBtn.classList.remove('active');
+        }
+
+        function closeAllDropdowns() {
+            exportDropdown.classList.remove('visible');
+            exportToggleBtn.classList.remove('active');
+            fullscreenExportDropdown.classList.remove('visible');
+            fullscreenExportBtn.classList.remove('active');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!exportDropdown.contains(e.target) && !exportToggleBtn.contains(e.target) &&
+                !fullscreenExportDropdown.contains(e.target) && !fullscreenExportBtn.contains(e.target)) {
+                closeAllDropdowns();
+            }
+        });
+
+        function getExportData() {
+            const dataToExport = currentFilteredData.length > 0 ? currentFilteredData : allData;
+            const visibleHeaders = headers.filter((_, idx) => !hiddenColumns.has(idx));
+
+            // Get visible column indices
+            const visibleIndices = headers.map((_, idx) => idx).filter(idx => !hiddenColumns.has(idx));
+
+            // Get alignments for visible columns (mapped to export column index)
+            // QR columns are always center aligned
+            const exportAlignments = visibleIndices.map(colIdx => {
+                if (isQrColumnIndex(colIdx)) return 'center';
+                return columnAlignments.get(colIdx) || 'left';
+            });
+
+            const visibleData = dataToExport.map(row => {
+                return visibleIndices.map(colIdx => {
+                    // Check if this is a QR column
+                    const qrInfo = getQrColumnInfo(colIdx);
+                    if (qrInfo) {
+                        // Get source value and apply allCaps if needed
+                        const sourceValue = row[qrInfo.sourceIdx] !== undefined ? String(row[qrInfo.sourceIdx]) : '';
+                        return qrInfo.allCaps ? sourceValue.toUpperCase() : sourceValue;
+                    }
+                    return row[colIdx];
+                });
+            });
+
+            return { headers: visibleHeaders, data: visibleData, alignments: exportAlignments };
+        }
+
+        function exportData(format) {
+            closeAllDropdowns();
+
+            if (allData.length === 0) {
+                showToast('No data to export');
+                return;
+            }
+
+            const { headers: exportHeaders, data: exportRows, alignments: exportAlignments } = getExportData();
+            const filename = currentFileName ? currentFileName.replace(/\.[^/.]+$/, '') : 'export';
+
+            switch (format) {
+                case 'xlsx':
+                    exportToXlsx(exportHeaders, exportRows, filename, exportAlignments);
+                    break;
+                case 'csv':
+                    exportToCsv(exportHeaders, exportRows, filename);
+                    break;
+                case 'json':
+                    exportToJson(exportHeaders, exportRows, filename);
+                    break;
+            }
+        }
+
+        function exportToXlsx(exportHeaders, exportRows, filename, alignments) {
+            const wsData = [exportHeaders, ...exportRows];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            // Apply alignments to cells
+            if (alignments && alignments.length > 0) {
+                const range = XLSX.utils.decode_range(ws['!ref']);
+
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const alignment = alignments[C];
+                    if (alignment && alignment !== 'left') {
+                        // Map alignment to Excel horizontal alignment
+                        const excelAlign = alignment === 'center' ? 'center' : 'right';
+
+                        // Apply to all rows in this column
+                        for (let R = range.s.r; R <= range.e.r; R++) {
+                            const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                            if (ws[cellRef]) {
+                                if (!ws[cellRef].s) ws[cellRef].s = {};
+                                ws[cellRef].s.alignment = { horizontal: excelAlign };
+                            }
+                        }
+                    }
+                }
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+            showToast('Exported as XLSX');
+        }
+
+        function exportToCsv(exportHeaders, exportRows, filename) {
+            const escapeCSV = (val) => {
+                const str = String(val === undefined || val === null ? '' : val);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            };
+
+            const csvContent = [
+                exportHeaders.map(escapeCSV).join(','),
+                ...exportRows.map(row => row.map(escapeCSV).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showToast('Exported as CSV');
+        }
+
+        function exportToJson(exportHeaders, exportRows, filename) {
+            const jsonData = exportRows.map(row => {
+                const obj = {};
+                exportHeaders.forEach((header, idx) => {
+                    obj[header] = row[idx] !== undefined ? row[idx] : '';
+                });
+                return obj;
+            });
+
+            const jsonContent = JSON.stringify(jsonData, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}.json`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showToast('Exported as JSON');
+        }
+
+        function updateFilterUI() {
+            const totalFilters = Object.values(columnFilters).reduce((sum, set) => sum + set.size, 0);
+
+            if (totalFilters > 0) {
+                filterBadge.textContent = totalFilters;
+                filterBadge.style.display = '';
+                filterToggleBtn.classList.add('active');
+            } else {
+                filterBadge.style.display = 'none';
+                if (!filterPanel.classList.contains('visible')) {
+                    filterToggleBtn.classList.remove('active');
+                }
+            }
+
+            clearFiltersBtn.disabled = totalFilters === 0;
+
+            // Update available filter options based on current filters
+            updateAvailableFilterValues();
+
+            headers.forEach((_, colIdx) => {
+                const countEl = document.getElementById(`filterCount-${colIdx}`);
+                if (countEl) {
+                    const selectedCount = columnFilters[colIdx] ? columnFilters[colIdx].size : 0;
+                    if (selectedCount > 0) {
+                        countEl.textContent = selectedCount;
+                        countEl.classList.add('active');
+                    } else {
+                        const availableCount = Object.values(availableFilterValues[colIdx] || {}).filter(c => c > 0).length;
+                        countEl.textContent = availableCount;
+                        countEl.classList.remove('active');
+                    }
+                }
+            });
+
+            renderActiveFilters();
+            renderTableHeaders();
+        }
+
+        // Calculate available filter values based on data filtered by OTHER columns
+        let availableFilterValues = {};
+        function updateAvailableFilterValues() {
+            availableFilterValues = {};
+
+            headers.forEach((_, targetColIdx) => {
+                availableFilterValues[targetColIdx] = {};
+
+                // Filter data by all columns EXCEPT the target column
+                const filteredByOthers = allData.filter(row => {
+                    for (const [colIdx, values] of Object.entries(columnFilters)) {
+                        if (parseInt(colIdx) === targetColIdx) continue; // Skip target column
+                        const cellValue = String(row[colIdx] !== undefined ? row[colIdx] : '');
+                        if (!values.has(cellValue)) return false;
+                    }
+                    return true;
+                });
+
+                // Count available values for target column
+                filteredByOthers.forEach(row => {
+                    const value = String(row[targetColIdx] !== undefined ? row[targetColIdx] : '');
+                    availableFilterValues[targetColIdx][value] = (availableFilterValues[targetColIdx][value] || 0) + 1;
+                });
+            });
+
+            // Update filter option visibility and counts
+            headers.forEach((_, colIdx) => {
+                const optionsContainer = document.getElementById(`filterOptions-${colIdx}`);
+                if (!optionsContainer) return;
+
+                const options = optionsContainer.querySelectorAll('.filter-option');
+                options.forEach(option => {
+                    const value = option.dataset.value;
+                    const checkbox = option.querySelector('input[type="checkbox"]');
+                    const countSpan = option.querySelector('.filter-option-count');
+                    const availableCount = availableFilterValues[colIdx][value] || 0;
+
+                    if (countSpan) {
+                        countSpan.textContent = availableCount;
+                    }
+
+                    // Hide options with 0 count unless they are checked
+                    if (availableCount === 0 && !checkbox.checked) {
+                        option.style.display = 'none';
+                    } else {
+                        option.style.display = '';
+                        if (availableCount === 0) {
+                            option.classList.add('unavailable');
+                        } else {
+                            option.classList.remove('unavailable');
+                        }
+                    }
+                });
+
+                // Update select-all checkbox state
+                updateSelectAllState(colIdx);
+            });
+        }
+
+        function updateSelectAllState(colIdx) {
+            const selectAllCheckbox = document.querySelector(`.select-all-checkbox[data-col="${colIdx}"]`);
+            if (!selectAllCheckbox) return;
+
+            const column = selectAllCheckbox.closest('.filter-column');
+            if (!column) return;
+
+            const options = column.querySelectorAll('.filter-option');
+            let visibleAvailableCount = 0;
+            let checkedCount = 0;
+
+            options.forEach(opt => {
+                if (opt.style.display !== 'none' && !opt.classList.contains('unavailable')) {
+                    visibleAvailableCount++;
+                    const checkbox = opt.querySelector('input[type="checkbox"]');
+                    if (checkbox && checkbox.checked) {
+                        checkedCount++;
+                    }
+                }
+            });
+
+            // Select-all is checked only if all visible available options are checked
+            selectAllCheckbox.checked = visibleAvailableCount > 0 && checkedCount === visibleAvailableCount;
+        }
+
+        function renderActiveFilters() {
+            activeFilters.innerHTML = '';
+            let filterCount = 0;
+
+            Object.entries(columnFilters).forEach(([colIdx, values]) => {
+                values.forEach(value => {
+                    filterCount++;
+                    const tag = document.createElement('div');
+                    tag.className = 'active-filter-tag';
+                    tag.innerHTML = `
+                        <span class="column-name">${escapeHtml(String(headers[colIdx]))}:</span>
+                        ${value === '' ? '(Empty)' : escapeHtml(value)}
+                        <button data-col="${colIdx}" data-value="${escapeAttr(value)}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    `;
+
+                    tag.querySelector('button').addEventListener('click', () => {
+                        removeFilter(parseInt(colIdx), value);
+                    });
+
+                    activeFilters.appendChild(tag);
+                });
+            });
+
+            // Update the count badge
+            activeFiltersCount.textContent = filterCount;
+
+            if (filterCount > 0) {
+                activeFiltersWrapper.classList.add('visible');
+            } else {
+                activeFiltersWrapper.classList.remove('visible');
+            }
+        }
+
+        function removeFilter(colIdx, value) {
+            if (columnFilters[colIdx]) {
+                columnFilters[colIdx].delete(value);
+                if (columnFilters[colIdx].size === 0) {
+                    delete columnFilters[colIdx];
+                }
+            }
+
+            const checkbox = document.querySelector(`input[type="checkbox"][data-col="${colIdx}"][data-value="${escapeAttr(value)}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+
+            updateFilterUI();
+            applyFiltersAndSearch();
+        }
+
+        function clearAllFilters() {
+            columnFilters = {};
+
+            document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+
+            updateFilterUI();
+            applyFiltersAndSearch();
+        }
+
+        function applyFiltersAndSearch() {
+            let filteredData = allData;
+
+            Object.entries(columnFilters).forEach(([colIdx, values]) => {
+                if (values.size > 0) {
+                    filteredData = filteredData.filter(row => {
+                        const cellValue = String(row[colIdx] !== undefined ? row[colIdx] : '');
+                        return values.has(cellValue);
+                    });
+                }
+            });
+
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            if (searchTerm) {
+                filteredData = filteredData.filter(row =>
+                    row.some(cell =>
+                        String(cell).toLowerCase().includes(searchTerm)
+                    )
+                );
+            }
+
+            currentFilteredData = filteredData;
+            renderTable(filteredData);
+        }
+
+        function renderTableHeaders() {
+            const qrIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+            </svg>`;
+
+            tableHead.innerHTML = `
+                <tr>
+                    <th>#</th>
+                    ${headers.map((h, idx) => {
+                        if (hiddenColumns.has(idx)) return '';
+                        const isFiltered = columnFilters[idx] && columnFilters[idx].size > 0;
+                        const isQrCol = isQrColumnIndex(idx);
+                        // QR columns are always center aligned, skip alignment class
+                        const alignment = isQrCol ? null : columnAlignments.get(idx);
+                        const alignClass = alignment ? `align-${alignment}` : '';
+                        const headerContent = isQrCol
+                            ? `<span class="qr-column-header">${qrIcon}${escapeHtml(String(h))}</span>`
+                            : escapeHtml(String(h));
+                        return `<th class="filterable ${isFiltered ? 'filtered' : ''} ${alignClass} ${isQrCol ? 'align-center' : ''}" data-col-idx="${idx}">
+                            <div class="th-content">
+                                ${headerContent}
+                                ${isFiltered ? '<span class="filter-indicator"></span>' : ''}
+                            </div>
+                        </th>`;
+                    }).join('')}
+                </tr>
+            `;
+
+            // Add click handlers to headers for QR column menu
+            tableHead.querySelectorAll('th[data-col-idx]').forEach(th => {
+                th.addEventListener('click', (e) => {
+                    const colIdx = parseInt(th.dataset.colIdx);
+                    handleHeaderContextMenu(e, colIdx);
+                });
+            });
+        }
+
+        function renderTable(data) {
+            renderTableHeaders();
+
+            const visibleColumnsCount = headers.length - hiddenColumns.size;
+
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="${visibleColumnsCount + 1}">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                                <p>No data found</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                const searchTerm = searchInput.value.toLowerCase();
+                tableBody.innerHTML = data.map((row, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        ${headers.map((_, colIdx) => {
+                            if (hiddenColumns.has(colIdx)) return '';
+
+                            // Check if this is a QR column (always center aligned)
+                            const qrInfo = getQrColumnInfo(colIdx);
+                            if (qrInfo) {
+                                // Get the source value
+                                const sourceValue = row[qrInfo.sourceIdx] !== undefined ? String(row[qrInfo.sourceIdx]) : '';
+                                const displayValue = qrInfo.allCaps ? sourceValue.toUpperCase() : sourceValue;
+
+                                if (!displayValue.trim()) {
+                                    return `<td class="qr-cell"><span class="qr-cell-placeholder">-</span></td>`;
+                                }
+
+                                // Render with placeholder, will be filled async
+                                return `<td class="qr-cell" data-qr-value="${escapeAttr(displayValue)}" data-source-value="${escapeAttr(sourceValue)}"><div class="qr-loading"></div></td>`;
+                            }
+
+                            const alignment = columnAlignments.get(colIdx);
+                            const alignClass = alignment ? `align-${alignment}` : '';
+
+                            const rawValue = row[colIdx] !== undefined ? String(row[colIdx]) : '';
+                            let cellValue = rawValue;
+                            if (searchTerm && cellValue.toLowerCase().includes(searchTerm)) {
+                                cellValue = highlightText(cellValue, searchTerm);
+                            } else {
+                                cellValue = escapeHtml(cellValue);
+                            }
+                            return `<td class="clickable-cell ${alignClass}" data-value="${escapeAttr(rawValue)}" title="${escapeHtml(rawValue)}">${cellValue}</td>`;
+                        }).join('')}
+                    </tr>
+                `).join('');
+
+                // Add click listeners to cells
+                tableBody.querySelectorAll('.clickable-cell').forEach(cell => {
+                    cell.addEventListener('click', handleCellClick);
+                });
+
+                // Generate QR codes async
+                renderQrCells();
+            }
+
+            visibleCount.textContent = data.length.toLocaleString();
+            totalCount.textContent = allData.length.toLocaleString();
+            fullscreenVisibleCount.textContent = data.length.toLocaleString();
+            fullscreenTotalCount.textContent = allData.length.toLocaleString();
+        }
+
+        function handleCellClick(e) {
+            const cell = e.currentTarget;
+            const value = cell.dataset.value;
+
+            // Don't show menu for empty cells, but close any open menu
+            if (!value || value.trim() === '') {
+                closeCellMenu();
+                return;
+            }
+            e.stopPropagation();
+
+            selectedCellValue = value;
+
+            // Position the menu
+            const rect = cell.getBoundingClientRect();
+            let left = e.clientX;
+            let top = e.clientY;
+
+            // Adjust if menu would go off screen
+            const menuWidth = 170;
+            const menuHeight = 100;
+            
+            if (left + menuWidth > window.innerWidth) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+            if (top + menuHeight > window.innerHeight) {
+                top = window.innerHeight - menuHeight - 10;
+            }
+
+            cellMenu.style.left = `${left}px`;
+            cellMenu.style.top = `${top}px`;
+            cellMenu.classList.add('visible');
+
+            // Reset copy item state
+            copyMenuItem.classList.remove('success');
+            copyMenuItem.querySelector('span').textContent = 'Copy';
+        }
+
+        function closeCellMenu() {
+            cellMenu.classList.remove('visible');
+        }
+
+        function handleCopy() {
+            copyToClipboard(selectedCellValue);
+            copyMenuItem.classList.add('success');
+            copyMenuItem.querySelector('span').textContent = 'Copied!';
+            
+            setTimeout(() => {
+                closeCellMenu();
+            }, 600);
+        }
+
+        const qrCapsToggle = document.getElementById('qrCapsToggle');
+
+        function handleQrCode() {
+            closeCellMenu();
+            qrCapsToggle.checked = false;
+            showQrModal(selectedCellValue);
+        }
+
+        function showQrModal(value) {
+            // Clear previous QR code
+            qrCodeWrapper.innerHTML = '';
+
+            // Apply caps if toggle is on
+            const displayValue = qrCapsToggle.checked ? value.toUpperCase() : value;
+
+            // Generate QR code using QRCode.js
+            new QRCode(qrCodeWrapper, {
+                text: displayValue || ' ',
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            // Show value
+            qrValue.textContent = displayValue || '(Empty)';
+
+            // Show modal
+            qrModal.classList.add('visible');
+        }
+
+        qrCapsToggle.addEventListener('change', () => {
+            showQrModal(selectedCellValue);
+        });
+
+        function closeQrModal() {
+            qrModal.classList.remove('visible');
+        }
+
+        function downloadQrCode() {
+            const canvas = qrCodeWrapper.querySelector('canvas');
+            if (canvas) {
+                const padding = 20;
+                const paddedCanvas = document.createElement('canvas');
+                paddedCanvas.width = canvas.width + padding * 2;
+                paddedCanvas.height = canvas.height + padding * 2;
+                const ctx = paddedCanvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
+                ctx.drawImage(canvas, padding, padding);
+                const link = document.createElement('a');
+                // Sanitize filename: remove invalid characters
+                const sanitized = selectedCellValue
+                    .replace(/[\\/:*?"<>|]/g, '')
+                    .trim()
+                    .substring(0, 50);
+                link.download = sanitized ? `${sanitized}.png` : `qr-code-${Date.now()}.png`;
+                link.href = paddedCanvas.toDataURL('image/png');
+                link.click();
+                showToast('QR code downloaded!');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Copied to clipboard!');
+            });
+        }
+
+        // QR Column Functions
+        function handleHeaderContextMenu(e, colIdx) {
+            e.stopPropagation();
+            closeHeaderContextMenu();
+            contextMenuSourceCol = colIdx;
+
+            // Check if this is a QR column
+            const isQrCol = isQrColumnIndex(colIdx);
+
+            // Get the divider element
+            const menuDivider = headerContextMenu.querySelector('.header-context-menu-divider');
+
+            // Hide alignment options for QR columns (they're always center aligned)
+            if (isQrCol) {
+                alignLeftItem.style.display = 'none';
+                alignCenterItem.style.display = 'none';
+                alignRightItem.style.display = 'none';
+                menuDivider.style.display = 'none';
+            } else {
+                alignLeftItem.style.display = 'flex';
+                alignCenterItem.style.display = 'flex';
+                alignRightItem.style.display = 'flex';
+                menuDivider.style.display = 'block';
+
+                // Update alignment menu item states
+                const currentAlignment = columnAlignments.get(colIdx) || 'left';
+                alignLeftItem.classList.toggle('active', currentAlignment === 'left');
+                alignCenterItem.classList.toggle('active', currentAlignment === 'center');
+                alignRightItem.classList.toggle('active', currentAlignment === 'right');
+            }
+
+            // Check if source column already has a QR column
+            const hasQrColumn = qrColumns.has(colIdx);
+
+            if (isQrCol) {
+                // Show only remove option for QR columns
+                generateQrColumnItem.style.display = 'none';
+                generateQrColumnCapsItem.style.display = 'none';
+                removeQrColumnItem.style.display = 'flex';
+            } else if (hasQrColumn) {
+                // Source column already has QR column - disable generate options
+                generateQrColumnItem.style.display = 'flex';
+                generateQrColumnCapsItem.style.display = 'flex';
+                removeQrColumnItem.style.display = 'none';
+                generateQrColumnItem.classList.add('disabled');
+                generateQrColumnCapsItem.classList.add('disabled');
+                generateQrColumnItem.querySelector('span').textContent = 'QR Column Exists';
+                generateQrColumnCapsItem.querySelector('span').textContent = 'QR Column Exists';
+            } else {
+                // Normal column - show generate options
+                generateQrColumnItem.style.display = 'flex';
+                generateQrColumnCapsItem.style.display = 'flex';
+                removeQrColumnItem.style.display = 'none';
+                generateQrColumnItem.classList.remove('disabled');
+                generateQrColumnCapsItem.classList.remove('disabled');
+                generateQrColumnItem.querySelector('span').textContent = 'Generate QR Column';
+                generateQrColumnCapsItem.querySelector('span').textContent = 'Generate QR Column (ALL CAPS)';
+            }
+
+            // Position and show menu
+            headerContextMenu.style.left = e.clientX + 'px';
+            headerContextMenu.style.top = e.clientY + 'px';
+            headerContextMenu.classList.add('visible');
+        }
+
+        function closeHeaderContextMenu() {
+            headerContextMenu.classList.remove('visible');
+            contextMenuSourceCol = null;
+        }
+
+        function setColumnAlignment(alignment) {
+            if (contextMenuSourceCol === null) return;
+
+            const colIdx = contextMenuSourceCol;
+
+            if (alignment === 'left') {
+                // Left is default, so remove from map
+                columnAlignments.delete(colIdx);
+            } else {
+                columnAlignments.set(colIdx, alignment);
+            }
+
+            closeHeaderContextMenu();
+            applyFiltersAndSearch(); // Re-render table
+            showToast(`Column aligned ${alignment}`);
+        }
+
+        let columnToHide = null;
+
+        function openHideColumnModal() {
+            if (contextMenuSourceCol === null) return;
+
+            columnToHide = contextMenuSourceCol;
+            const columnName = headers[columnToHide] || `Column ${columnToHide + 1}`;
+            hideColumnName.textContent = columnName;
+
+            closeHeaderContextMenu();
+            hideColumnModal.classList.add('visible');
+        }
+
+        function closeHideColumnModal() {
+            hideColumnModal.classList.remove('visible');
+            columnToHide = null;
+        }
+
+        function confirmHideColumn() {
+            if (columnToHide === null) return;
+
+            hiddenColumns.add(columnToHide);
+            const columnName = headers[columnToHide] || `Column ${columnToHide + 1}`;
+
+            closeHideColumnModal();
+            updateColumnsUI();
+            renderColumnsPanel();
+            renderFilterPanel();
+            applyFiltersAndSearch();
+            showToast(`Column "${columnName}" hidden`);
+        }
+
+        function isQrColumnIndex(colIdx) {
+            for (const [sourceIdx, info] of qrColumns) {
+                if (info.qrColIdx === colIdx) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function getQrColumnInfo(qrColIdx) {
+            for (const [sourceIdx, info] of qrColumns) {
+                if (info.qrColIdx === qrColIdx) {
+                    return { sourceIdx, ...info };
+                }
+            }
+            return null;
+        }
+
+        function getSourceColForQrCol(qrColIdx) {
+            for (const [sourceIdx, info] of qrColumns) {
+                if (info.qrColIdx === qrColIdx) {
+                    return sourceIdx;
+                }
+            }
+            return null;
+        }
+
+        function generateQrColumn(allCaps) {
+            if (contextMenuSourceCol === null) return;
+
+            const sourceColIdx = contextMenuSourceCol;
+            const headerName = headers[sourceColIdx];
+            const suffix = allCaps ? ' [QR CAPS]' : ' [QR]';
+            const qrHeaderName = headerName + suffix;
+
+            // Insert QR column right after source column
+            const qrColIdx = sourceColIdx + 1;
+
+            // Adjust existing QR column indices (both source and qrCol indices)
+            const newQrColumns = new Map();
+            for (const [srcIdx, info] of qrColumns) {
+                const newSourceIdx = srcIdx >= qrColIdx ? srcIdx + 1 : srcIdx;
+                const newQrColIdx = info.qrColIdx >= qrColIdx ? info.qrColIdx + 1 : info.qrColIdx;
+                newQrColumns.set(newSourceIdx, { ...info, qrColIdx: newQrColIdx });
+            }
+            qrColumns = newQrColumns;
+
+            // Adjust hidden columns
+            const newHiddenColumns = new Set();
+            for (const hiddenIdx of hiddenColumns) {
+                if (hiddenIdx >= qrColIdx) {
+                    newHiddenColumns.add(hiddenIdx + 1);
+                } else {
+                    newHiddenColumns.add(hiddenIdx);
+                }
+            }
+            hiddenColumns = newHiddenColumns;
+
+            // Adjust column alignments
+            const newAlignments = new Map();
+            for (const [colIdx, alignment] of columnAlignments) {
+                if (colIdx >= qrColIdx) {
+                    newAlignments.set(colIdx + 1, alignment);
+                } else {
+                    newAlignments.set(colIdx, alignment);
+                }
+            }
+            columnAlignments = newAlignments;
+
+            // Insert new header
+            headers.splice(qrColIdx, 0, qrHeaderName);
+
+            // Insert QR placeholder in each data row
+            for (const row of allData) {
+                row.splice(qrColIdx, 0, '__QR_COLUMN__');
+            }
+
+            // Store QR column info
+            qrColumns.set(sourceColIdx, {
+                qrColIdx: qrColIdx,
+                headerName: qrHeaderName,
+                allCaps: allCaps
+            });
+
+            closeHeaderContextMenu();
+            applyFiltersAndSearch();
+            renderColumnsPanel();
+            updateColumnsBadge();
+            showToast(`QR column "${qrHeaderName}" added`);
+        }
+
+        function removeQrColumn() {
+            if (contextMenuSourceCol === null) return;
+
+            const qrColIdx = contextMenuSourceCol;
+            const qrInfo = getQrColumnInfo(qrColIdx);
+
+            if (!qrInfo) return;
+
+            const sourceColIdx = qrInfo.sourceIdx;
+            const headerName = qrInfo.headerName;
+
+            // Remove from headers
+            headers.splice(qrColIdx, 1);
+
+            // Remove from all data rows
+            for (const row of allData) {
+                row.splice(qrColIdx, 1);
+            }
+
+            // Rebuild qrColumns map with adjusted indices
+            const newQrColumns = new Map();
+            for (const [srcIdx, info] of qrColumns) {
+                if (srcIdx === sourceColIdx) continue; // Skip the one being removed
+                const newSourceIdx = srcIdx > qrColIdx ? srcIdx - 1 : srcIdx;
+                const newQrColIdx = info.qrColIdx > qrColIdx ? info.qrColIdx - 1 : info.qrColIdx;
+                newQrColumns.set(newSourceIdx, { ...info, qrColIdx: newQrColIdx });
+            }
+            qrColumns = newQrColumns;
+
+            // Adjust hidden columns
+            const newHiddenColumns = new Set();
+            for (const hiddenIdx of hiddenColumns) {
+                if (hiddenIdx === qrColIdx) continue; // Remove this one
+                if (hiddenIdx > qrColIdx) {
+                    newHiddenColumns.add(hiddenIdx - 1);
+                } else {
+                    newHiddenColumns.add(hiddenIdx);
+                }
+            }
+            hiddenColumns = newHiddenColumns;
+
+            // Adjust column alignments
+            const newAlignments = new Map();
+            for (const [colIdx, alignment] of columnAlignments) {
+                if (colIdx === qrColIdx) continue; // Remove this one
+                if (colIdx > qrColIdx) {
+                    newAlignments.set(colIdx - 1, alignment);
+                } else {
+                    newAlignments.set(colIdx, alignment);
+                }
+            }
+            columnAlignments = newAlignments;
+
+            closeHeaderContextMenu();
+            applyFiltersAndSearch();
+            renderColumnsPanel();
+            updateColumnsBadge();
+            showToast(`QR column "${headerName}" removed`);
+        }
+
+        function generateQrDataUrl(value, size = 50) {
+            return new Promise((resolve) => {
+                const tempDiv = document.createElement('div');
+                tempDiv.style.display = 'none';
+                document.body.appendChild(tempDiv);
+
+                new QRCode(tempDiv, {
+                    text: value,
+                    width: size,
+                    height: size,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+
+                setTimeout(() => {
+                    const canvas = tempDiv.querySelector('canvas');
+                    const dataUrl = canvas ? canvas.toDataURL('image/png') : '';
+                    document.body.removeChild(tempDiv);
+                    resolve(dataUrl);
+                }, 50);
+            });
+        }
+
+        async function getCachedQrDataUrl(value, size = 50) {
+            const cacheKey = `${value}_${size}`;
+
+            if (qrCodeCache.has(cacheKey)) {
+                return qrCodeCache.get(cacheKey);
+            }
+
+            const dataUrl = await generateQrDataUrl(value, size);
+
+            // Limit cache size
+            if (qrCodeCache.size > 1000) {
+                const firstKey = qrCodeCache.keys().next().value;
+                qrCodeCache.delete(firstKey);
+            }
+
+            qrCodeCache.set(cacheKey, dataUrl);
+            return dataUrl;
+        }
+
+        function clearQrCache() {
+            qrCodeCache.clear();
+        }
+
+        async function renderQrCells() {
+            const qrCells = tableBody.querySelectorAll('.qr-cell[data-qr-value]');
+
+            for (const cell of qrCells) {
+                const qrValue = cell.dataset.qrValue;
+                const sourceValue = cell.dataset.sourceValue;
+
+                try {
+                    const dataUrl = await getCachedQrDataUrl(qrValue, 50);
+                    if (dataUrl) {
+                        const img = document.createElement('img');
+                        img.className = 'qr-cell-img';
+                        img.src = dataUrl;
+                        img.alt = 'QR Code';
+                        img.title = qrValue;
+
+                        // Add click handler to show QR modal
+                        img.addEventListener('click', () => {
+                            selectedCellValue = sourceValue;
+                            showQrModal(qrValue);
+                        });
+
+                        cell.innerHTML = '';
+                        cell.appendChild(img);
+                    }
+                } catch (err) {
+                    cell.innerHTML = '<span class="qr-cell-placeholder">Error</span>';
+                }
+            }
+        }
+
+        function showQrModal(value) {
+            qrCodeWrapper.innerHTML = '';
+            new QRCode(qrCodeWrapper, {
+                text: value,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            qrValue.textContent = value;
+            qrModal.classList.add('visible');
+        }
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.add('visible');
+
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2500);
+        }
+
+        // Focus Mode Functions
+        function openFocusModal() {
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                showToast('No data to focus on');
+                return;
+            }
+            focusMaxRow.textContent = rows.length;
+            focusStartRow.max = rows.length;
+            focusStartRow.value = 1;
+            focusModal.classList.add('visible');
+            focusStartRow.focus();
+            focusStartRow.select();
+        }
+
+        function closeFocusModal() {
+            focusModal.classList.remove('visible');
+        }
+
+        function startFocusMode(startRow) {
+            const rows = tableBody.querySelectorAll('tr');
+            const maxRow = rows.length;
+
+            // Validate and clamp the start row
+            let rowIndex = parseInt(startRow, 10) - 1; // Convert to 0-based
+            if (isNaN(rowIndex) || rowIndex < 0) rowIndex = 0;
+            if (rowIndex >= maxRow) rowIndex = maxRow - 1;
+
+            focusModeEnabled = true;
+            focusedRowIndex = rowIndex;
+            focusToggleBtn.classList.add('active');
+            fullscreenFocusBtn.classList.add('active');
+            tableContainer.classList.add('focus-mode');
+
+            // Apply enlarged mode if option is checked
+            if (focusEnlargeOption.checked) {
+                tableContainer.classList.add('focus-enlarged');
+            }
+
+            focusIndicator.classList.add('visible');
+            closeFocusModal();
+            updateFocusedRow();
+        }
+
+        function stopFocusMode() {
+            focusModeEnabled = false;
+            focusToggleBtn.classList.remove('active');
+            fullscreenFocusBtn.classList.remove('active');
+            tableContainer.classList.remove('focus-mode');
+            tableContainer.classList.remove('focus-enlarged');
+            focusIndicator.classList.remove('visible');
+            clearFocusedRow();
+        }
+
+        function toggleFocusMode() {
+            if (focusModeEnabled) {
+                stopFocusMode();
+            } else {
+                openFocusModal();
+            }
+        }
+
+        function updateFocusedRow() {
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows.length === 0) return;
+
+            // Clamp index to valid range
+            focusedRowIndex = Math.max(0, Math.min(focusedRowIndex, rows.length - 1));
+
+            // Remove focus from all rows
+            rows.forEach(row => row.classList.remove('focused'));
+
+            // Add focus to current row
+            const focusedRow = rows[focusedRowIndex];
+            if (focusedRow) {
+                focusedRow.classList.add('focused');
+                focusedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // Update indicator input
+            focusRowInput.value = focusedRowIndex + 1;
+            focusRowInput.max = rows.length;
+            focusTotalRows.textContent = rows.length;
+        }
+
+        function jumpToFocusRow(rowNum) {
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows.length === 0) return;
+
+            let rowIndex = parseInt(rowNum, 10) - 1; // Convert to 0-based
+            if (isNaN(rowIndex) || rowIndex < 0) rowIndex = 0;
+            if (rowIndex >= rows.length) rowIndex = rows.length - 1;
+
+            focusedRowIndex = rowIndex;
+            updateFocusedRow();
+        }
+
+        function clearFocusedRow() {
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => row.classList.remove('focused'));
+        }
+
+        function focusNextRow() {
+            if (!focusModeEnabled) return;
+            const rows = tableBody.querySelectorAll('tr');
+            if (focusedRowIndex < rows.length - 1) {
+                focusedRowIndex++;
+                updateFocusedRow();
+            }
+        }
+
+        function focusPreviousRow() {
+            if (!focusModeEnabled) return;
+            if (focusedRowIndex > 0) {
+                focusedRowIndex--;
+                updateFocusedRow();
+            }
+        }
+
+        function scrollTableHorizontal(amount) {
+            const tableScroll = tableContainer.querySelector('.table-scroll');
+            if (tableScroll) {
+                tableScroll.scrollBy({ left: amount, behavior: 'smooth' });
+            }
+        }
+
+        let lastVerticalScrollTime = 0;
+        let lastHorizontalScrollTime = 0;
+        const scrollThrottle = 150; // ms between scroll actions
+
+        function handleFocusModeScroll(e) {
+            if (!focusModeEnabled) return;
+
+            const now = Date.now();
+
+            // Handle vertical scroll (deltaY) for row navigation
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                e.preventDefault();
+                if (now - lastVerticalScrollTime < scrollThrottle) return;
+                lastVerticalScrollTime = now;
+
+                if (e.deltaY > 0) {
+                    focusNextRow();
+                } else if (e.deltaY < 0) {
+                    focusPreviousRow();
+                }
+            }
+            // Handle horizontal scroll (deltaX) for table scrolling
+            else if (Math.abs(e.deltaX) > 0) {
+                e.preventDefault();
+                if (now - lastHorizontalScrollTime < scrollThrottle) return;
+                lastHorizontalScrollTime = now;
+
+                scrollTableHorizontal(e.deltaX > 0 ? 150 : -150);
+            }
+        }
+
+        function highlightText(text, term) {
+            const escaped = escapeHtml(text);
+            const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+            return escaped.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function clearData() {
+            workbook = null;
+            currentSheet = null;
+            allData = [];
+            headers = [];
+            currentFilteredData = [];
+            columnFilters = {};
+            columnValues = {};
+            hiddenColumns.clear();
+            currentFileName = '';
+            qrColumns.clear();
+            columnAlignments.clear();
+            qrCodeCache.clear();
+            contextMenuSourceCol = null;
+            focusModeEnabled = false;
+            focusedRowIndex = 0;
+            focusToggleBtn.classList.remove('active');
+            fullscreenFocusBtn.classList.remove('active');
+            tableContainer.classList.remove('focus-mode');
+            tableContainer.classList.remove('focus-enlarged');
+            focusIndicator.classList.remove('visible');
+            focusModal.classList.remove('visible');
+            focusEnlargeOption.checked = false;
+            hideColumnModal.classList.remove('visible');
+            columnToHide = null;
+            fileInput.value = '';
+            searchInput.value = '';
+            fullscreenSearchInput.value = '';
+            searchClear.classList.remove('visible');
+            fullscreenSearchClear.classList.remove('visible');
+
+            fileInfo.classList.remove('visible');
+            sheetTabs.classList.remove('visible');
+            controls.classList.remove('visible');
+            filterPanel.classList.remove('visible');
+            filterToggleBtn.classList.remove('active');
+            columnsPanel.classList.remove('visible');
+            columnsToggleBtn.classList.remove('active');
+            activeFiltersWrapper.classList.remove('visible');
+            activeFiltersWrapper.classList.add('collapsed');
+            statsBar.classList.remove('visible');
+            tableContainer.classList.remove('visible');
+            tableContainer.classList.remove('fullscreen');
+            expandToggleBtn.classList.remove('active');
+
+            dropZone.classList.remove('collapsed');
+            dropZoneToggle.classList.remove('visible', 'collapsed');
+
+            filterBadge.style.display = 'none';
+            columnsBadge.style.display = 'none';
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+            sheetTabs.innerHTML = '';
+            filterColumns.innerHTML = '';
+            columnsList.innerHTML = '';
+            activeFilters.innerHTML = '';
+        }
+    </script>
+    <footer class="footer">Built with ❤️ by <a href="https://x.com/xproductivity" target="_blank" rel="noopener noreferrer">@XPRODUCTIVITY</a></footer>
+</body>
+</html>
