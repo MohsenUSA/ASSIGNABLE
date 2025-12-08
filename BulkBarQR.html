@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk BarQR - Bulk Barcode & QR Code Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 240 10% 3.9%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --border: 240 5.9% 90%;
+      --input: 240 5.9% 90%;
+      --primary: 240 5.9% 10%;
+      --primary-foreground: 0 0% 98%;
+      --secondary: 240 4.8% 95.9%;
+      --secondary-foreground: 240 5.9% 10%;
+      --ring: 240 5.9% 10%;
+      --radius: 0.5rem;
+    }
+
+    .dark {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --card-foreground: 0 0% 98%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --border: 240 3.7% 15.9%;
+      --input: 240 3.7% 15.9%;
+      --primary: 0 0% 98%;
+      --primary-foreground: 240 5.9% 10%;
+      --secondary: 240 3.7% 15.9%;
+      --secondary-foreground: 0 0% 98%;
+      --ring: 240 4.9% 83.9%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .theme-toggle {
+      display: flex;
+      gap: 0.25rem;
+      background: hsl(var(--muted));
+      padding: 0.25rem;
+      border-radius: var(--radius);
+    }
+
+    .theme-btn {
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      color: hsl(var(--muted-foreground));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .theme-btn:hover {
+      color: hsl(var(--foreground));
+    }
+
+    .theme-btn.active {
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .theme-btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .description {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      padding-right: 2rem;
+      font-size: 0.875rem;
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      transition: border-color 0.2s, box-shadow 0.2s;
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: hsl(var(--ring));
+      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+    }
+
+    textarea::placeholder {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .clear-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: transparent;
+      border: 1.5px solid #ef4444;
+      color: #ef4444;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .clear-btn:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      background: hsl(var(--muted));
+      padding: 0.25rem;
+      border-radius: var(--radius);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: hsl(var(--foreground));
+    }
+
+    .tab.active {
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.6), 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: hsl(var(--ring));
+      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+
+    .btn-secondary {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      margin-top: 0.5rem;
+    }
+
+    .extracted-count {
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      margin-top: 0.25rem;
+    }
+
+    .total-generated {
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #16a34a;
+      margin-top: 1rem;
+    }
+
+    .focus-hint {
+      text-align: center;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      margin-top: 0.5rem;
+    }
+
+    .codes-container {
+      margin-top: 1.5rem;
+    }
+
+    .code-card {
+      background: #ffffff;
+      border: 4px solid #9ca3af;
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .code-card.focus-mode {
+      cursor: pointer;
+    }
+
+    .code-card.blurred {
+      filter: blur(8px);
+      opacity: 0.3;
+    }
+
+    .code-card.focused {
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+    }
+
+    .code-index {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #000000;
+      margin-bottom: 0.5rem;
+    }
+
+    .code-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 0;
+    }
+
+    .code-wrapper svg, .code-wrapper canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .qr-container img {
+      display: none;
+    }
+
+    .code-value {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #000000;
+      margin-top: 0.5rem;
+      word-break: break-all;
+    }
+
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .scroll-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .scroll-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scroll-top:hover {
+      opacity: 0.9;
+    }
+
+    .scroll-top svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    footer a {
+      color: hsl(var(--muted-foreground));
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: hsl(var(--foreground));
+      text-decoration: underline;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Bulk BarQR</h1>
+      <div class="theme-toggle">
+        <button class="theme-btn" data-theme="light" title="Light mode">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+        </button>
+        <button class="theme-btn" data-theme="dark" title="Dark mode">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+        <button class="theme-btn" data-theme="system" title="System theme">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+            <path d="M8 21h8M12 17v4"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <p class="description">
+      This tool extracts ASINs from POs, Excel files, or your Emails and generates Barcodes or QR Codes.
+      Copy the whole PO or Excel file or Email content and paste it into the text box. It will extract the ASINs for you.
+    </p>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="bulk-input">Paste your content</label>
+        <div class="textarea-wrapper">
+          <textarea id="bulk-input" placeholder="Paste your copied text here!" autocomplete="off"></textarea>
+          <button type="button" class="clear-btn hidden" id="clear-btn" title="Clear">&times;</button>
+        </div>
+        <div class="extracted-count" id="extracted-count"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Type</label>
+        <div class="tabs">
+          <button class="tab active" data-type="barcode">Barcode</button>
+          <button class="tab" data-type="qr">QR Code</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="generate-btn">Generate</button>
+      <button class="btn btn-secondary hidden" id="focus-btn">Focus Mode</button>
+      <button class="btn btn-secondary hidden" id="exit-focus-btn">Exit Focus Mode</button>
+
+      <div class="total-generated hidden" id="total-generated"></div>
+      <div class="focus-hint hidden" id="focus-hint">
+        Use Up/Down arrow keys or scroll to navigate - Click cards to focus - Press ESC to exit
+      </div>
+
+      <div class="codes-container" id="codes-container"></div>
+    </div>
+
+    <footer>
+      Your input data is never sent to any server
+      <br><br>
+      Powered by:
+      <a href="https://github.com/lindell/JsBarcode" target="_blank">JsBarcode</a> -
+      <a href="https://github.com/soldair/node-qrcode" target="_blank">QRCode.js</a>
+    </footer>
+  </div>
+
+  <button class="scroll-top" id="scroll-top" title="Scroll to top">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 15l-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <script>
+    // Theme Management
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const html = document.documentElement;
+
+    function setTheme(theme) {
+      localStorage.setItem('theme', theme);
+      updateThemeButtons(theme);
+
+      if (theme === 'system') {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        html.classList.toggle('dark', systemDark);
+      } else {
+        html.classList.toggle('dark', theme === 'dark');
+      }
+    }
+
+    function updateThemeButtons(theme) {
+      themeButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+    }
+
+    themeButtons.forEach(btn => {
+      btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (localStorage.getItem('theme') === 'system') {
+        html.classList.toggle('dark', e.matches);
+      }
+    });
+
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    setTheme(savedTheme);
+
+    // App State
+    let extractedValues = [];
+    let generatedCodes = [];
+    let isFocusMode = false;
+    let focusedIndex = 0;
+    let isScrolling = false;
+    let scrollTimeout = null;
+
+    // DOM Elements
+    const bulkInput = document.getElementById('bulk-input');
+    const typeTabs = document.querySelectorAll('.tab[data-type]');
+    const generateBtn = document.getElementById('generate-btn');
+    let selectedType = 'barcode';
+    const focusBtn = document.getElementById('focus-btn');
+    const exitFocusBtn = document.getElementById('exit-focus-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const extractedCount = document.getElementById('extracted-count');
+    const totalGenerated = document.getElementById('total-generated');
+    const focusHint = document.getElementById('focus-hint');
+    const codesContainer = document.getElementById('codes-container');
+
+    // ASIN Regex Pattern
+    const asinPattern = /\bB(?=[A-Z0-9]{9}\b)(?=[A-Z]*\d)[A-Z0-9]{9}/g;
+
+    // Extract ASINs from input
+    function extractASINs(text) {
+      const upperText = text.toUpperCase();
+      const matches = upperText.match(asinPattern) || [];
+      return [...new Set(matches)];
+    }
+
+    // Type tab selection
+    typeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        typeTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        selectedType = tab.dataset.type;
+
+        // Auto-generate if we have extracted values
+        if (extractedValues.length > 0) {
+          generatedCodes = extractedValues.map((value, index) => ({
+            value,
+            type: selectedType,
+            index: index + 1
+          }));
+          renderCodes();
+          updateUI();
+        }
+      });
+    });
+
+    // Update UI based on extracted values
+    function updateInputUI() {
+      // Show clear button if there's any text in the input
+      clearBtn.classList.toggle('hidden', bulkInput.value.trim() === '');
+
+      if (extractedValues.length > 0) {
+        extractedCount.textContent = `${extractedValues.length} ASIN${extractedValues.length > 1 ? 's' : ''} extracted`;
+      } else {
+        extractedCount.textContent = '';
+      }
+    }
+
+    // Handle paste - intercept and filter to ASINs only
+    bulkInput.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pastedText = e.clipboardData.getData('text');
+      const newExtracted = extractASINs(pastedText);
+
+      if (newExtracted.length > 0) {
+        // Merge with existing ASINs if any
+        const combined = [...new Set([...extractedValues, ...newExtracted])];
+        extractedValues = combined;
+        bulkInput.value = extractedValues.join(' ');
+      }
+
+      updateInputUI();
+    });
+
+    // Handle manual input changes
+    bulkInput.addEventListener('input', () => {
+      const value = bulkInput.value;
+
+      if (value.trim() === '') {
+        extractedValues = [];
+        generatedCodes = [];
+        renderCodes();
+      } else {
+        // Re-extract from current value (handles manual edits)
+        extractedValues = extractASINs(value);
+      }
+
+      updateInputUI();
+    });
+
+    // Handle Escape key to clear
+    bulkInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        clearAll();
+      }
+    });
+
+    // Generate codes
+    generateBtn.addEventListener('click', () => {
+      if (extractedValues.length === 0) return;
+
+      generatedCodes = extractedValues.map((value, index) => ({
+        value,
+        type: selectedType,
+        index: index + 1
+      }));
+
+      renderCodes();
+      updateUI();
+    });
+
+    // Render codes
+    function renderCodes() {
+      codesContainer.innerHTML = '';
+
+      if (generatedCodes.length === 0) {
+        totalGenerated.classList.add('hidden');
+        focusBtn.classList.add('hidden');
+        exitFocusBtn.classList.add('hidden');
+        focusHint.classList.add('hidden');
+        return;
+      }
+
+      generatedCodes.forEach((code, index) => {
+        const card = document.createElement('div');
+        card.className = 'code-card';
+        card.dataset.index = index;
+
+        if (isFocusMode) {
+          card.classList.add('focus-mode');
+          if (index === focusedIndex) {
+            card.classList.add('focused');
+          } else {
+            card.classList.add('blurred');
+          }
+        }
+
+        const indexEl = document.createElement('div');
+        indexEl.className = 'code-index';
+        indexEl.textContent = code.index;
+        card.appendChild(indexEl);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+
+        if (code.type === 'barcode') {
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.id = `barcode-${index}`;
+          wrapper.appendChild(svg);
+          card.appendChild(wrapper);
+
+          setTimeout(() => {
+            try {
+              JsBarcode(`#barcode-${index}`, code.value, {
+                format: 'CODE128',
+                width: 2,
+                height: 50,
+                displayValue: true,
+                background: '#ffffff',
+                lineColor: '#000000'
+              });
+            } catch (e) {
+              console.error('Barcode error:', e);
+            }
+          }, 0);
+        } else {
+          const qrContainer = document.createElement('div');
+          qrContainer.className = 'qr-container';
+          qrContainer.id = `qr-${index}`;
+          wrapper.appendChild(qrContainer);
+          card.appendChild(wrapper);
+
+          const valueEl = document.createElement('div');
+          valueEl.className = 'code-value';
+          valueEl.textContent = code.value;
+          card.appendChild(valueEl);
+
+          setTimeout(() => {
+            try {
+              new QRCode(document.getElementById(`qr-${index}`), {
+                text: code.value,
+                width: 128,
+                height: 128,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+              });
+            } catch (e) {
+              console.error('QR error:', e);
+            }
+          }, 0);
+        }
+
+        card.addEventListener('click', () => handleCardClick(index));
+        codesContainer.appendChild(card);
+      });
+
+      updateUI();
+    }
+
+    // Update UI state
+    function updateUI() {
+      if (generatedCodes.length > 0) {
+        const type = selectedType === 'barcode' ? 'Barcode' : 'QR Code';
+        totalGenerated.textContent = `Total: ${generatedCodes.length} ${type}${generatedCodes.length > 1 ? 's' : ''} Generated`;
+        totalGenerated.classList.remove('hidden');
+
+        if (isFocusMode) {
+          focusBtn.classList.add('hidden');
+          exitFocusBtn.classList.remove('hidden');
+          focusHint.classList.remove('hidden');
+        } else {
+          focusBtn.classList.remove('hidden');
+          exitFocusBtn.classList.add('hidden');
+          focusHint.classList.add('hidden');
+        }
+      } else {
+        totalGenerated.classList.add('hidden');
+        focusBtn.classList.add('hidden');
+        exitFocusBtn.classList.add('hidden');
+        focusHint.classList.add('hidden');
+      }
+    }
+
+    // Handle card click
+    function handleCardClick(index) {
+      if (!isFocusMode) return;
+
+      isScrolling = false;
+      focusedIndex = index;
+      updateCardFocus();
+
+      const card = codesContainer.children[index];
+      if (card) {
+        card.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+
+    // Update card focus states
+    function updateCardFocus() {
+      const cards = codesContainer.querySelectorAll('.code-card');
+      cards.forEach((card, index) => {
+        if (isFocusMode) {
+          card.classList.add('focus-mode');
+          if (index === focusedIndex) {
+            card.classList.add('focused');
+            card.classList.remove('blurred');
+          } else {
+            card.classList.remove('focused');
+            card.classList.add('blurred');
+          }
+        } else {
+          card.classList.remove('focus-mode', 'focused', 'blurred');
+        }
+      });
+    }
+
+    // Enter focus mode
+    focusBtn.addEventListener('click', () => {
+      isFocusMode = true;
+      focusedIndex = 0;
+      updateCardFocus();
+      updateUI();
+
+      const firstCard = codesContainer.children[0];
+      if (firstCard) {
+        firstCard.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    });
+
+    // Exit focus mode
+    exitFocusBtn.addEventListener('click', () => {
+      isFocusMode = false;
+      focusedIndex = 0;
+      updateCardFocus();
+      updateUI();
+    });
+
+    // Clear all function
+    function clearAll() {
+      bulkInput.value = '';
+      extractedValues = [];
+      generatedCodes = [];
+      isFocusMode = false;
+      focusedIndex = 0;
+      extractedCount.textContent = '';
+      clearBtn.classList.add('hidden');
+      renderCodes();
+      bulkInput.focus();
+    }
+
+    // Clear button click
+    clearBtn.addEventListener('click', clearAll);
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!isFocusMode || generatedCodes.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        isScrolling = false;
+        if (focusedIndex < generatedCodes.length - 1) {
+          focusedIndex++;
+          updateCardFocus();
+          codesContainer.children[focusedIndex]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        isScrolling = false;
+        if (focusedIndex > 0) {
+          focusedIndex--;
+          updateCardFocus();
+          codesContainer.children[focusedIndex]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      } else if (e.key === 'Escape') {
+        isFocusMode = false;
+        focusedIndex = 0;
+        updateCardFocus();
+        updateUI();
+      }
+    });
+
+    // Scroll detection for focus mode
+    window.addEventListener('scroll', () => {
+      if (!isFocusMode || generatedCodes.length === 0) return;
+
+      isScrolling = true;
+
+      const viewportCenter = window.innerHeight / 2;
+      let closestIndex = 0;
+      let closestDistance = Infinity;
+
+      const cards = codesContainer.querySelectorAll('.code-card');
+      cards.forEach((card, index) => {
+        const rect = card.getBoundingClientRect();
+        const cardCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(cardCenter - viewportCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+
+      if (closestIndex !== focusedIndex) {
+        focusedIndex = closestIndex;
+        updateCardFocus();
+      }
+
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    }, true);
+
+    // Auto-focus input on load
+    bulkInput.focus();
+
+    // Scroll to top button
+    const scrollTopBtn = document.getElementById('scroll-top');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        scrollTopBtn.classList.add('visible');
+      } else {
+        scrollTopBtn.classList.remove('visible');
+      }
+    });
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  </script>
+</body>
+</html>
