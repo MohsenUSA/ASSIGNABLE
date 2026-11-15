@@ -154,20 +154,22 @@
       const pad = (n) => String(n).padStart(2, '0');
       const mmss = (secs) => `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}`;
 
-      // Table with Order | Running | Target columns (target in its own cell, like a dashboard)
+      // Table with Order | Timer columns; the timer is one element holding "running / target", e.g. "00:12 / 00:20"
       const makeTable = (body) => {
         const table = document.createElement('table');
-        table.innerHTML = '<thead><tr><th>Order</th><th>Running</th><th>Target</th></tr></thead><tbody></tbody>';
+        table.innerHTML = '<thead><tr><th>Order</th><th>Timer</th></tr></thead><tbody></tbody>';
         body.appendChild(table);
         return table.tBodies[0];
       };
       const rowHtml = (name, running, target) =>
-        `<td>${name}</td><td><span class="tw-sw">${running}</span></td><td>/ ${target}</td>`;
+        `<td>${name}</td><td><span class="tw-sw">${running} / ${target}</span></td>`;
+      // Adds a row; returns set(secs), which shows the running time next to the row's target
       const addRow = (tbody, name, target) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = rowHtml(name, '', mmss(target));
+        tr.innerHTML = rowHtml(name, mmss(0), mmss(target));
         tbody.appendChild(tr);
-        return tr.querySelector('.tw-sw');
+        const sw = tr.querySelector('.tw-sw');
+        return (secs) => { sw.textContent = `${mmss(secs)} / ${mmss(target)}`; };
       };
       // List lines: label, then the time in its own span, then optional extra text
       const makeList = (body) => {
@@ -185,22 +187,27 @@
       // build(body, run) draws the scenario and returns tick(elapsedSeconds), called once per second
       const SCENARIOS = [
         {
-          title: '1. Each row alerts at its own target (target in its own cell)',
+          title: '1. Each row alerts at its own target (one element: "running / target")',
           expect: '4 chimes: row A after 15 s, B after 45 s, C after 75 s, D after 110 s. Only the row that just reached its target gets the red border.',
           build: (body, run) => {
             const tbody = makeTable(body);
-            const sws = [15, 45, 75, 110].map((t, i) => addRow(tbody, `Order ${'ABCD'[i]} (run ${run})`, t));
-            return (e) => sws.forEach((sw) => { sw.textContent = mmss(e); });
+            const sets = [15, 45, 75, 110].map((t, i) => addRow(tbody, `Order ${'ABCD'[i]} (run ${run})`, t));
+            return (e) => sets.forEach((set) => set(e));
           }
         },
         {
-          title: '2. Target written right after the time, in the same text',
+          title: '2. Same timer format in a list; job B has the two times in their own spans inside the one element',
           expect: '2 chimes: job A after 20 s, job B after 65 s (its stopwatch starts at 40 s).',
           build: (body, run) => {
             const ul = makeList(body);
-            const jobs = [{ name: 'A', from: 0, target: 20 }, { name: 'B', from: 40, target: 105 }];
-            const sws = jobs.map((j) => addLine(ul, `Inline job ${j.name} (run ${run})`, 'tw-inline'));
-            return (e) => sws.forEach((sw, i) => { sw.textContent = `${mmss(jobs[i].from + e)} / ${mmss(jobs[i].target)}`; });
+            const a = addLine(ul, `Inline job A (run ${run})`, 'tw-inline');
+            const b = addLine(ul, `Inline job B (run ${run})`, 'tw-inline');
+            b.innerHTML = `<span class="tw-run">${mmss(40)}</span> / <span class="tw-target">${mmss(105)}</span>`;
+            const bRun = b.querySelector('.tw-run'); // only its text changes, so the element stays the same
+            return (e) => {
+              a.textContent = `${mmss(e)} / ${mmss(20)}`;
+              bRun.textContent = mmss(40 + e);
+            };
           }
         },
         {
@@ -215,8 +222,8 @@
           title: '4. Already past its target when it appears',
           expect: '1 chime about 3-4 s after start (a new kind of stopwatch needs a few seconds of ticking first; if scenario 1, 5, 6 or 7 already ran, it is right away). It alerts only once.',
           build: (body, run) => {
-            const sw = addRow(makeTable(body), `Late order (run ${run})`, 120);
-            return (e) => { sw.textContent = mmss(130 + e); };
+            const set = addRow(makeTable(body), `Late order (run ${run})`, 120);
+            return (e) => set(130 + e);
           }
         },
         {
@@ -242,8 +249,8 @@
             ];
             return (e) => rows.forEach((r) => {
               if (e < r.at) return;
-              if (!r.sw) r.sw = addRow(tbody, `${r.name} (run ${run})`, r.target);
-              r.sw.textContent = mmss(e - r.at);
+              if (!r.set) r.set = addRow(tbody, `${r.name} (run ${run})`, r.target);
+              r.set(e - r.at);
             });
           }
         },
@@ -252,8 +259,8 @@
           expect: '1 chime after 25 s, with a red border on all 3 rows at once.',
           build: (body, run) => {
             const tbody = makeTable(body);
-            const sws = ['X', 'Y', 'Z'].map((n) => addRow(tbody, `Batch ${n} (run ${run})`, 25));
-            return (e) => sws.forEach((sw) => { sw.textContent = mmss(e); });
+            const sets = ['X', 'Y', 'Z'].map((n) => addRow(tbody, `Batch ${n} (run ${run})`, 25));
+            return (e) => sets.forEach((set) => set(e));
           }
         },
         {
