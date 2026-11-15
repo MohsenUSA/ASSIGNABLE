@@ -126,6 +126,206 @@
     });
   </script>
 
+  <!-- ========== Running Timer Watcher: test scenarios (each starts with a button, ends after 2 minutes) ========== -->
+  <style>
+    #tw-tests { margin-top: 24px; padding: 12px; border: 2px solid #1971c2; border-radius: 6px; font-family: system-ui, sans-serif; max-width: 780px; }
+    #tw-tests h2 { margin: 0 0 4px; font-size: 1.2em; }
+    .tw-note { color: #555; margin: 4px 0 10px; }
+    .tw-scenario { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin: 10px 0; background: #f9f9f9; }
+    .tw-scenario h3 { margin: 0 0 4px; font-size: 1em; }
+    .tw-expect { color: #276738; margin: 4px 0 8px; }
+    .tw-status { font-style: italic; color: #900; margin-left: 8px; }
+    .tw-scenario table { border-collapse: collapse; margin-top: 8px; }
+    .tw-scenario th, .tw-scenario td { border: 1px solid #ddd; padding: 4px 10px; font-family: monospace; }
+    .tw-scenario ul { margin: 8px 0 0; font-family: monospace; }
+  </style>
+
+  <div id="tw-tests">
+    <h2>Running Timer Watcher tests</h2>
+    <p class="tw-note">Each scenario starts when you press its button and stops by itself after 2 minutes (its rows are then removed).
+      Pressing a button also counts as the click that turns on the watcher's sound. "Run again" uses new row names, so a scenario can alert again.</p>
+    <button id="tw-run-all">Run all scenarios</button>
+    <div id="tw-scenarios"></div>
+  </div>
+
+  <script>
+    (() => {
+      const DURATION = 120; // every scenario stops by itself after 2 minutes
+      const pad = (n) => String(n).padStart(2, '0');
+      const mmss = (secs) => `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}`;
+
+      // Table with Order | Running | Target columns (target in its own cell, like a dashboard)
+      const makeTable = (body) => {
+        const table = document.createElement('table');
+        table.innerHTML = '<thead><tr><th>Order</th><th>Running</th><th>Target</th></tr></thead><tbody></tbody>';
+        body.appendChild(table);
+        return table.tBodies[0];
+      };
+      const rowHtml = (name, running, target) =>
+        `<td>${name}</td><td><span class="tw-sw">${running}</span></td><td>/ ${target}</td>`;
+      const addRow = (tbody, name, target) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = rowHtml(name, '', mmss(target));
+        tbody.appendChild(tr);
+        return tr.querySelector('.tw-sw');
+      };
+      // List lines: label, then the time in its own span, then optional extra text
+      const makeList = (body) => {
+        const ul = document.createElement('ul');
+        body.appendChild(ul);
+        return ul;
+      };
+      const addLine = (ul, label, cls, extra) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="tw-label">${label}</span> <span class="${cls}"></span>${extra || ''}`;
+        ul.appendChild(li);
+        return li.querySelector(`.${cls}`);
+      };
+
+      // build(body, run) draws the scenario and returns tick(elapsedSeconds), called once per second
+      const SCENARIOS = [
+        {
+          title: '1. Each row alerts at its own target (target in its own cell)',
+          expect: '4 chimes: row A after 15 s, B after 45 s, C after 75 s, D after 110 s. Only the row that just reached its target gets the red border.',
+          build: (body, run) => {
+            const tbody = makeTable(body);
+            const sws = [15, 45, 75, 110].map((t, i) => addRow(tbody, `Order ${'ABCD'[i]} (run ${run})`, t));
+            return (e) => sws.forEach((sw) => { sw.textContent = mmss(e); });
+          }
+        },
+        {
+          title: '2. Target written right after the time, in the same text',
+          expect: '2 chimes: job A after 20 s, job B after 65 s (its stopwatch starts at 40 s).',
+          build: (body, run) => {
+            const ul = makeList(body);
+            const jobs = [{ name: 'A', from: 0, target: 20 }, { name: 'B', from: 40, target: 105 }];
+            const sws = jobs.map((j) => addLine(ul, `Inline job ${j.name} (run ${run})`, 'tw-inline'));
+            return (e) => sws.forEach((sw, i) => { sw.textContent = `${mmss(jobs[i].from + e)} / ${mmss(jobs[i].target)}`; });
+          }
+        },
+        {
+          title: '3. No target shown: uses the ALERT_AT fallback (5 minutes)',
+          expect: '1 chime after 30 s (the stopwatch starts at 4 min 30 s). With ALERT_WITHOUT_TARGET = false: no chime.',
+          build: (body, run) => {
+            const sw = addLine(makeList(body), `Job without target (run ${run})`, 'tw-solo');
+            return (e) => { sw.textContent = mmss(270 + e); };
+          }
+        },
+        {
+          title: '4. Already past its target when it appears',
+          expect: '1 chime about 3-4 s after start (a new kind of stopwatch needs a few seconds of ticking first; if scenario 1, 5, 6 or 7 already ran, it is right away). It alerts only once.',
+          build: (body, run) => {
+            const sw = addRow(makeTable(body), `Late order (run ${run})`, 120);
+            return (e) => { sw.textContent = mmss(130 + e); };
+          }
+        },
+        {
+          title: '5. Dashboard redraws its rows every second',
+          expect: '2 chimes, each only once: row A after 35 s, row B after 80 s. The red border stays its full time even though the rows are rebuilt.',
+          build: (body, run) => {
+            const tbody = makeTable(body);
+            const rows = [['A', 35], ['B', 80]];
+            return (e) => {
+              tbody.innerHTML = rows.map(([n, t]) => `<tr>${rowHtml(`Redrawn ${n} (run ${run})`, mmss(e), mmss(t))}</tr>`).join('');
+            };
+          }
+        },
+        {
+          title: '6. Rows added while the page is open',
+          expect: '3 chimes: first row after 10 s; the row added at 40 s alerts after 55 s; the row added at 85 s alerts after 100 s.',
+          build: (body, run) => {
+            const tbody = makeTable(body);
+            const rows = [
+              { name: 'First', at: 0, target: 10 },
+              { name: 'Added at 40 s', at: 40, target: 15 },
+              { name: 'Added at 85 s', at: 85, target: 15 }
+            ];
+            return (e) => rows.forEach((r) => {
+              if (e < r.at) return;
+              if (!r.sw) r.sw = addRow(tbody, `${r.name} (run ${run})`, r.target);
+              r.sw.textContent = mmss(e - r.at);
+            });
+          }
+        },
+        {
+          title: '7. Several rows reach their target at the same moment',
+          expect: '1 chime after 25 s, with a red border on all 3 rows at once.',
+          build: (body, run) => {
+            const tbody = makeTable(body);
+            const sws = ['X', 'Y', 'Z'].map((n) => addRow(tbody, `Batch ${n} (run ${run})`, 25));
+            return (e) => sws.forEach((sw) => { sw.textContent = mmss(e); });
+          }
+        },
+        {
+          title: '8. Times that are NOT stopwatches (must stay silent)',
+          expect: 'No chime and no border for the whole 2 minutes: a wall clock (hours and minutes), a clock with seconds, a countdown, a paused stopwatch already past its target, and a fixed time.',
+          build: (body, run) => {
+            const ul = makeList(body);
+            const clock = addLine(ul, `Wall clock (run ${run})`, 'tw-clock');
+            const clockS = addLine(ul, `Clock with seconds (run ${run})`, 'tw-clock-s');
+            const down = addLine(ul, `Countdown (run ${run})`, 'tw-countdown');
+            const paused = addLine(ul, `Paused job (run ${run})`, 'tw-paused', ' / 00:30');
+            const fixed = addLine(ul, `Last update (run ${run})`, 'tw-fixed');
+            paused.textContent = '00:45';
+            fixed.textContent = '2026-11-14 12:00';
+            return (e) => {
+              const d = new Date();
+              clock.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+              clockS.textContent = `${clock.textContent}:${pad(d.getSeconds())}`;
+              down.textContent = mmss(Math.max(0, 90 - e));
+            };
+          }
+        }
+      ];
+
+      const stop = (s) => {
+        clearInterval(s.timer);
+        s.timer = null;
+        s.body.innerHTML = '';
+        s.status.textContent = `Ended after 2 minutes (run ${s.run}).`;
+        s.btn.textContent = 'Run again';
+        s.btn.disabled = false;
+      };
+
+      const start = (s) => {
+        if (s.timer) return;
+        s.run++;
+        s.body.innerHTML = '';
+        const tick = s.build(s.body, s.run);
+        const t0 = Date.now();
+        let last = -1;
+        const step = () => {
+          const e = Math.floor((Date.now() - t0) / 1000);
+          if (e >= DURATION) { stop(s); return; }
+          if (e === last) return;
+          last = e;
+          tick(e);
+          s.status.textContent = `Running (run ${s.run}): ${DURATION - e} s left`;
+        };
+        s.btn.disabled = true;
+        s.timer = setInterval(step, 200);
+        step();
+      };
+
+      const list = document.getElementById('tw-scenarios');
+      SCENARIOS.forEach((s) => {
+        const card = document.createElement('div');
+        card.className = 'tw-scenario';
+        card.innerHTML = '<h3></h3><div class="tw-expect"></div><button>Start</button><span class="tw-status">Not started</span><div class="tw-body"></div>';
+        card.querySelector('h3').textContent = s.title;
+        card.querySelector('.tw-expect').textContent = `Expected: ${s.expect}`;
+        s.btn = card.querySelector('button');
+        s.status = card.querySelector('.tw-status');
+        s.body = card.querySelector('.tw-body');
+        s.run = 0;
+        s.timer = null;
+        s.btn.addEventListener('click', () => start(s));
+        list.appendChild(card);
+      });
+      document.getElementById('tw-run-all').addEventListener('click', () => SCENARIOS.forEach((s) => start(s)));
+    })();
+  </script>
+
 
   
 
@@ -203,7 +403,6 @@
   <h3>A********E</h3><br>
   <h3>A********E</h3><br>
 
-  <h3>vless://5b447303-bcdc-4d53-b50e-bac856a5ee10@76.13.100.30:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=FwqbKZcqtXKmUoC031pYXtIQE8l5kJKl6b-XxzN-J3M&sid=cc9635ed513f6ef8&type=tcp#user1006</h3><br>
 
 </body>
 </html>
