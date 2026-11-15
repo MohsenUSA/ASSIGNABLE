@@ -154,22 +154,24 @@
       const pad = (n) => String(n).padStart(2, '0');
       const mmss = (secs) => `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}`;
 
-      // Table with Order | Timer columns; the timer is one element holding "running / target", e.g. "00:12 / 00:20"
+      // Table with Order | Timer columns. The timer is shown like the dashboard: one element holding
+      // the two times in separate spans of the same class: <span class="tw-time">00:12</span> <span class="tw-time">/ 00:20</span>
       const makeTable = (body) => {
         const table = document.createElement('table');
         table.innerHTML = '<thead><tr><th>Order</th><th>Timer</th></tr></thead><tbody></tbody>';
         body.appendChild(table);
         return table.tBodies[0];
       };
-      const rowHtml = (name, running, target) =>
-        `<td>${name}</td><td><span class="tw-sw">${running} / ${target}</span></td>`;
-      // Adds a row; returns set(secs), which shows the running time next to the row's target
+      const timerHtml = (running, target) =>
+        `<div class="tw-timer"><span class="tw-time">${running}</span> <span class="tw-time">/ ${target}</span></div>`;
+      const rowHtml = (name, running, target) => `<td>${name}</td><td>${timerHtml(running, target)}</td>`;
+      // Adds a row; returns set(secs), which changes only the running time (the first span)
       const addRow = (tbody, name, target) => {
         const tr = document.createElement('tr');
         tr.innerHTML = rowHtml(name, mmss(0), mmss(target));
         tbody.appendChild(tr);
-        const sw = tr.querySelector('.tw-sw');
-        return (secs) => { sw.textContent = `${mmss(secs)} / ${mmss(target)}`; };
+        const sw = tr.querySelector('.tw-time');
+        return (secs) => { sw.textContent = mmss(secs); };
       };
       // List lines: label, then the time in its own span, then optional extra text
       const makeList = (body) => {
@@ -187,7 +189,7 @@
       // build(body, run) draws the scenario and returns tick(elapsedSeconds), called once per second
       const SCENARIOS = [
         {
-          title: '1. Each row alerts at its own target (one element: "running / target")',
+          title: '1. Each row alerts at its own target (two spans of the same class: running, then "/ target")',
           expect: '4 chimes: row A after 15 s, B after 45 s, C after 75 s, D after 110 s. Only the row that just reached its target gets the red border.',
           build: (body, run) => {
             const tbody = makeTable(body);
@@ -196,16 +198,18 @@
           }
         },
         {
-          title: '2. Same timer format in a list; job B has the two times in their own spans inside the one element',
-          expect: '2 chimes: job A after 20 s, job B after 65 s (its stopwatch starts at 40 s).',
+          title: '2. Other ways of splitting the times into spans of the same class (in a list)',
+          expect: '2 chimes: job A after 20 s (the "/" sits between the two spans), job B after 65 s (the "/" has a span of its own; its stopwatch starts at 40 s).',
           build: (body, run) => {
             const ul = makeList(body);
-            const a = addLine(ul, `Inline job A (run ${run})`, 'tw-inline');
-            const b = addLine(ul, `Inline job B (run ${run})`, 'tw-inline');
-            b.innerHTML = `<span class="tw-run">${mmss(40)}</span> / <span class="tw-target">${mmss(105)}</span>`;
-            const bRun = b.querySelector('.tw-run'); // only its text changes, so the element stays the same
+            const a = addLine(ul, `Split job A (run ${run})`, 'tw-timer');
+            a.innerHTML = `<span class="tw-time">${mmss(0)}</span> / <span class="tw-time">${mmss(20)}</span>`;
+            const b = addLine(ul, `Split job B (run ${run})`, 'tw-timer');
+            b.innerHTML = `<span class="tw-time">${mmss(40)}</span><span class="tw-time">/</span><span class="tw-time">${mmss(105)}</span>`;
+            const aRun = a.querySelector('.tw-time'); // only the running span's text changes
+            const bRun = b.querySelector('.tw-time');
             return (e) => {
-              a.textContent = `${mmss(e)} / ${mmss(20)}`;
+              aRun.textContent = mmss(e);
               bRun.textContent = mmss(40 + e);
             };
           }
